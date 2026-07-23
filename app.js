@@ -2039,65 +2039,7 @@ add=async function(c,data){
 };
 
 function authUI(){$('authIndustry').innerHTML=Object.entries(INDUSTRIES).map(([id,x])=>`<option value="${id}">${T(x.name)}</option>`).join('');$('showLogin').onclick=()=>{mode='login';document.querySelectorAll('.register-only').forEach(x=>x.classList.add('hidden'));$('authSubmit').textContent=T('Entrar');$('showLogin').classList.add('active');$('showRegister').classList.remove('active');};$('showRegister').onclick=()=>{mode='register';document.querySelectorAll('.register-only').forEach(x=>x.classList.remove('hidden'));$('authSubmit').textContent=T('Crear cuenta');$('showRegister').classList.add('active');$('showLogin').classList.remove('active');};$('authForm').onsubmit=async e=>{e.preventDefault();$('authMsg').textContent=T('Procesando...');try{if(mode==='register'){const cred=await createUserWithEmailAndPassword(auth,$('authEmail').value,$('authPassword').value);await setDoc(doc(db,'users',cred.user.uid),{...defaultProfile(),businessName:$('authBusiness').value||'Mi Negocio',industry:$('authIndustry').value,email:$('authEmail').value});}else await signInWithEmailAndPassword(auth,$('authEmail').value,$('authPassword').value);$('authMsg').textContent='';}catch(err){$('authMsg').textContent=err.message;}};}
-const portalSyncTimers=new Map();
-const portalWatchedCollections=new Set(['clients','services','quotes','invoices','payments','assets']);
-function portalClientIdsFromSnapshot(collectionName,snapshot){
-  const ids=new Set();
-  for(const change of snapshot.docChanges()){
-    const data=change.doc.data()||{};
-    if(collectionName==='clients'){
-      if(data.portalEnabled && data.portalToken) ids.add(change.doc.id);
-      continue;
-    }
-    if(['services','quotes','invoices','assets'].includes(collectionName)){
-      if(data.clientId) ids.add(data.clientId);
-      continue;
-    }
-    if(collectionName==='payments'){
-      const inv=state.invoices.find(x=>x.id===data.invoiceId || x.number===data.invoiceNumber);
-      if(inv?.clientId) ids.add(inv.clientId);
-    }
-  }
-  return [...ids];
-}
-function scheduleAutomaticPortalSync(clientId){
-  if(!clientId) return;
-  const client=state.clients.find(x=>x.id===clientId);
-  if(!client?.portalEnabled || !client?.portalToken) return;
-  clearTimeout(portalSyncTimers.get(clientId));
-  portalSyncTimers.set(clientId,setTimeout(async()=>{
-    portalSyncTimers.delete(clientId);
-    try{
-      await syncClientPortal(clientId,{openAfter:false,copyLink:false,notify:false});
-      console.info('Portal sincronizado automáticamente:',clientId);
-    }catch(error){
-      console.error('No se pudo sincronizar automáticamente el portal:',clientId,error);
-    }
-  },900));
-}
-async function load(){
-  unsub.forEach(x=>x());unsub=[];
-  portalSyncTimers.forEach(t=>clearTimeout(t));portalSyncTimers.clear();
-  const snap=await getDoc(profRef());
-  if(!snap.exists())await setDoc(profRef(),defaultProfile());
-  let profileInitialized=false;
-  unsub.push(onSnapshot(profRef(),s=>{
-    state.profile=s.data()||defaultProfile();render();
-    if(profileInitialized) state.clients.filter(c=>c.portalEnabled&&c.portalToken).forEach(c=>scheduleAutomaticPortalSync(c.id));
-    profileInitialized=true;
-  }));
-  const initialized=new Set();
-  COLS.forEach(c=>unsub.push(onSnapshot(colPath(c),snapshot=>{
-    state[c]=snapshot.docs.map(d=>({id:d.id,...d.data()}));
-    $('syncStatus').textContent=T('Sincronizado');
-    render();
-    if(portalWatchedCollections.has(c)){
-      const ids=portalClientIdsFromSnapshot(c,snapshot);
-      if(initialized.has(c)) ids.forEach(scheduleAutomaticPortalSync);
-      initialized.add(c);
-    }
-  },e=>{$('syncStatus').textContent=T('Firebase bloqueado');console.error(e);}));
-}
+async function load(){unsub.forEach(x=>x());unsub=[];const snap=await getDoc(profRef());if(!snap.exists())await setDoc(profRef(),defaultProfile());unsub.push(onSnapshot(profRef(),s=>{state.profile=s.data()||defaultProfile();render();}));COLS.forEach(c=>unsub.push(onSnapshot(colPath(c),s=>{state[c]=s.docs.map(d=>({id:d.id,...d.data()}));$('syncStatus').textContent=T('Sincronizado');render();},e=>{$('syncStatus').textContent=T('Firebase bloqueado');console.error(e);})));}
 authUI();bindForms();onAuthStateChanged(auth,u=>{if(u){$('authScreen').classList.add('hidden');$('appShell').classList.remove('hidden');load();}else{$('authScreen').classList.remove('hidden');$('appShell').classList.add('hidden');}});
 
 /* V66 — Search Center por módulo
@@ -2449,7 +2391,7 @@ function portalServiceData(s){
 function portalAssetData(a){
   return {id:a.id,name:assetName(a),brand:a.brand||'',model:a.model||'',serial:a.serial||'',location:a.location||'',status:assetStatus(a),purchaseDate:a.purchaseDate||'',warrantyExpiration:a.warrantyExpiration||a.expirationDate||'',nextMaintenance:a.nextMaintenance||'',notes:a.notes||a.note||''};
 }
-async function syncClientPortal(clientId,{openAfter=true,copyLink=true,notify=true}={}){
+async function syncClientPortal(clientId,{openAfter=true}={}){
   const c=clientBy(clientId); if(!c.id){alert('Cliente no encontrado.');return;}
   const token=String(c.portalToken||'').trim()||newPortalToken();
   const p=profile();
@@ -2466,14 +2408,10 @@ async function syncClientPortal(clientId,{openAfter=true,copyLink=true,notify=tr
   await setDoc(doc(db,'clientPortals',token),payload,{merge:false});
   if(c.portalToken!==token || !c.portalEnabled) await updateDoc(docPath('clients',c.id),{portalToken:token,portalEnabled:true,portalUpdatedAt:new Date().toISOString()});
   const link=portalBaseUrl()+'?access='+encodeURIComponent(token);
-  let copied=false;
-  if(copyLink) copied=await copyPortalLink(link);
+  const copied=await copyPortalLink(link);
   if(openAfter) window.open(link,'_blank','noopener');
-  if(notify){
-    if(copied) alert('Portal actualizado. El enlace privado fue copiado.');
-    else if(copyLink) window.prompt('Portal actualizado. Safari no permitió copiar automáticamente. Copia este enlace:',link);
-    else alert('Portal actualizado.');
-  }
+  if(copied) alert('Portal actualizado. El enlace privado fue copiado.');
+  else window.prompt('Portal actualizado. Safari no permitió copiar automáticamente. Copia este enlace:',link);
   return link;
 }
 async function copyPortalLink(link){
