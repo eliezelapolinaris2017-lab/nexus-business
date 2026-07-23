@@ -952,3 +952,32 @@ th{position:sticky;top:0;z-index:2;background:#f8fafc}td,th{padding:10px 11px}td
 #sideUpgrade[hidden]{display:none!important}
 /* V76 Assets Lifecycle */
 .date-overdue{color:#b91c1c;font-weight:700}.date-soon{color:#b45309;font-weight:700}
+
+
+/* Biblioteca de Plantillas Rápidas - base funcional */
+.quick-template-heading{display:flex!important;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.quick-template-heading label{margin:0;font-weight:800}
+.quick-template-heading small{display:block;margin-top:3px}
+.quick-template-tools{display:grid!important;grid-template-columns:minmax(180px,1.4fr) minmax(160px,.8fr) auto;gap:10px!important;align-items:center;margin-bottom:12px}
+.quick-template-tools input,.quick-template-tools select{width:100%}
+.template-favorite-filter{display:flex!important;align-items:center;gap:7px;white-space:nowrap;margin:0!important}
+.quick-template-buttons{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:9px!important;margin-bottom:10px}
+.quick-template-button{text-align:left;display:flex!important;flex-direction:column;align-items:flex-start;gap:3px;min-height:58px}
+.quick-template-button span{font-weight:800}
+.quick-template-button small{font-size:11px;color:var(--muted)}
+.template-manager-panel{width:min(1120px,96vw);max-height:92vh;overflow:auto}
+.template-manager-actions{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0 16px}
+.template-import-label{display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.template-manager-grid{display:grid;grid-template-columns:minmax(280px,.85fr) minmax(360px,1.35fr);gap:18px;align-items:start}
+.template-manager-list{display:grid;gap:8px;margin-top:10px;max-height:610px;overflow:auto;padding-right:4px}
+.template-manager-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:8px;background:#fff}
+.template-manager-item>div{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.template-manager-select{border:0;background:transparent;text-align:left;padding:4px;display:flex;flex-direction:column;gap:3px;color:inherit}
+.template-manager-select small{color:var(--muted)}
+.template-editor{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;border:1px solid var(--line);border-radius:18px;background:#f8fafc;padding:15px}
+.template-editor .wide{grid-column:1/-1}
+.template-editor textarea{width:100%;resize:vertical}
+.template-editor-favorite{grid-column:1/-1;display:flex;align-items:center;gap:8px}
+.template-editor-actions{display:flex;justify-content:flex-end;gap:8px}
+.template-editor-empty{grid-column:1/-1;display:grid;place-items:center;min-height:260px;color:var(--muted);text-align:center}
+@media(max-width:800px){.quick-template-heading{align-items:flex-start;flex-direction:column}.quick-template-tools,.template-manager-grid,.template-editor{grid-template-columns:1fr}.template-manager-panel{width:100%;max-height:94vh}.template-editor .wide,.template-editor-favorite{grid-column:auto}.template-manager-item{grid-template-columns:1fr}.template-manager-item>div{justify-content:flex-start}}
