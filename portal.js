@@ -31,8 +31,11 @@ function renderTab(){
   const box=$('tabContent');
   if(active==='overview'){
     const pending=(data.invoices||[]).filter(x=>x.balance>0);
-    const next=(data.assets||[]).filter(x=>x.nextMaintenance).sort((a,b)=>a.nextMaintenance.localeCompare(b.nextMaintenance))[0];
-    box.innerHTML=`<h3>Resumen de su cuenta</h3><div class="overview-grid"><div><h4>Facturas pendientes</h4>${pending.length?pending.slice(0,5).map(x=>`<div class="line"><span>${esc(x.number)} · ${esc(x.dueDate||'Sin vencimiento')}</span><b>${money(x.balance)}</b></div>`).join(''):empty('No tiene facturas pendientes.')}</div><div><h4>Próximo mantenimiento</h4>${next?`<div class="focus"><b>${esc(next.name)}</b><span>${esc(next.nextMaintenance)}</span></div>`:empty('No hay mantenimiento programado.')}</div></div>`;
+    const today=new Date().toISOString().slice(0,10);
+    const scheduled=(data.maintenance||[]).filter(x=>x.dueDate&&x.dueDate>=today&&!['Completado','Cancelado'].includes(x.status)).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+    const assetDates=(data.assets||[]).filter(x=>x.nextMaintenance&&x.nextMaintenance>=today).map(x=>({dueDate:x.nextMaintenance,title:'Mantenimiento programado',assetName:x.name,status:'Programado'}));
+    const next=[...scheduled,...assetDates].sort((a,b)=>a.dueDate.localeCompare(b.dueDate))[0];
+    box.innerHTML=`<h3>Resumen de su cuenta</h3><div class="overview-grid"><div><h4>Facturas pendientes</h4>${pending.length?pending.slice(0,5).map(x=>`<div class="line"><span>${esc(x.number)} · ${esc(x.dueDate||'Sin vencimiento')}</span><b>${money(x.balance)}</b></div>`).join(''):empty('No tiene facturas pendientes.')}</div><div><h4>Próximo mantenimiento</h4>${next?`<div class="focus"><b>${esc(next.title||'Mantenimiento programado')}</b><span>${esc(next.assetName||'Equipo')} · ${esc(next.dueDate)}</span>${next.status?`<small>${esc(next.status)}</small>`:''}</div>`:empty('No hay mantenimiento programado.')}</div></div>`;
     return;
   }
   if(active==='invoices'){
@@ -89,5 +92,5 @@ async function openDocumentPdf(key,download){
 async function openPortal(token){$('loginMsg').textContent='Verificando acceso…';try{const snap=await getDoc(doc(db,'clientPortals',token));if(!snap.exists()||snap.data().enabled===false)throw new Error('Código inválido o portal desactivado.');data=snap.data();localStorage.setItem('nexusPortalAccess',token);$('portalLogin').classList.add('hidden');$('portalApp').classList.remove('hidden');render();}catch(e){$('loginMsg').textContent=e.message||'No se pudo abrir el portal.';}}
 $('accessForm').onsubmit=e=>{e.preventDefault();const token=$('accessCode').value.trim();if(token)openPortal(token)};
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{active=b.dataset.tab;renderTab()});
-$('exitBtn').onclick=()=>{localStorage.removeItem('nexusPortalAccess');location.href='portal.html'};
+$('exitBtn').onclick=()=>{localStorage.removeItem('nexusPortalAccess');location.href='./'};
 const params=new URLSearchParams(location.search);const initial=params.get('access')||localStorage.getItem('nexusPortalAccess')||'';if(initial){$('accessCode').value=initial;openPortal(initial)}

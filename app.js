@@ -165,6 +165,8 @@ function maskSSN(value){const d=cleanSSN(value); return d.length>=4 ? `***-**-${
 function vehicleAssetOptions(){return state.assets.filter(a=>String(assetCategory(a)).toLowerCase().includes('veh') || String(assetName(a)).toLowerCase().includes('veh'))}
 
 function invoicePaid(inv){const id=typeof inv==='string'?inv:inv?.id;return state.payments.filter(p=>p.invoiceId===id).reduce((t,p)=>t+Number(p.amount||0),0);}
+function invoicePaymentMethods(inv){const id=typeof inv==='string'?inv:inv?.id;return [...new Set(state.payments.filter(p=>p.invoiceId===id).map(p=>String(p.method||'').trim()).filter(Boolean))];}
+function invoicePaymentTerms(inv,fallback='Pago según acuerdo.'){const methods=invoicePaymentMethods(inv);if(!methods.length)return fallback;return `${methods.length>1?'Métodos de pago':'Método de pago'}: ${methods.join(', ')}.`;}
 function invoiceBalance(inv){return Math.max(0,Number(inv.total||0)-invoicePaid(inv));}
 function dateValue(d){return d ? new Date(String(d)+'T00:00:00').getTime() : 0;}
 function invoiceStatus(inv){
@@ -1893,7 +1895,7 @@ function businessDocumentHtml({label,number,date,validLabel,validDate,status,cli
 function previewInvoice(id){
   const inv=state.invoices.find(x=>x.id===id);if(!inv)return;const c=clientBy(inv.clientId),totals=invoiceTotals(inv),bal=invoiceBalance(inv),paid=invoicePaid(inv),status=invoiceStatus(inv);
   const items=inv.items&&inv.items.length?inv.items:[{description:inv.serviceTitle||'Servicio',qty:1,price:totals.subtotal}];
-  const html=businessDocumentHtml({label:'FACTURA',number:inv.number,date:niceDate(inv.date),validLabel:'Vence',validDate:inv.dueDate?niceDate(inv.dueDate):'—',status,clientName:inv.clientName,client:c,items,totals,paid,balance:bal,notes:inv.notes||'Gracias por confiar en nuestros servicios.',terms:inv.terms||inv.conditions||'Pago a través del método acordado.'});
+  const html=businessDocumentHtml({label:'FACTURA',number:inv.number,date:niceDate(inv.date),validLabel:'Vence',validDate:inv.dueDate?niceDate(inv.dueDate):'—',status,clientName:inv.clientName,client:c,items,totals,paid,balance:bal,notes:inv.notes||'Gracias por confiar en nuestros servicios.',terms:invoicePaymentTerms(inv,inv.terms||inv.conditions||'Pago a través del método acordado.')});
   state.previewHtml=html;$('reportPreview').innerHTML=html;show('reports');
 }
 function previewQuote(id){
@@ -2082,7 +2084,7 @@ function bindForms(){
   $('supplierPaymentForm').onsubmit=e=>{e.preventDefault();const s=supplierBy($('spSupplier').value);if(!s.id)return alert('Selecciona suplidor.');const pu=state.purchases.find(x=>x.id===($('spPurchase')?.value||''))||{};const amount=Number($('spAmount').value||0);add('supplierPayments',{supplierId:s.id,supplierName:s.name,purchaseId:pu.id||'',purchaseNumber:pu.number||pu.reference||'',date:$('spDate').value,method:$('spMethod').value,amount,note:$('spNote').value});add('cashflow',{date:$('spDate').value,type:'Gasto',concept:`Pago suplidor ${s.name}${pu.id?' · '+(pu.number||pu.concept):''}`,amount});e.target.reset();};
   $('payrollForm').onsubmit=async e=>{e.preventDefault();const t=teamBy($('prTeam').value);if(!t.id)return alert('Selecciona empleado/equipo.');const gross=Number($('prGross').value||0),bonus=Number($('prBonus')?.value||0),retention=Number($('prRetention')?.value||0),ded=Number($('prDeductions').value||0),adv=Number($('prAdvance')?.value||0),retType=$('prRetentionType')?.value||'Hacienda',retDest=$('prRetentionDest')?.value||'Departamento de Hacienda',retDue=$('prRetentionDue')?.value||plusDays(15),net=Math.max(0,gross+bonus-retention-ded-adv);const payrollRef=await add('payroll',{teamId:t.id,teamName:t.name,date:$('prDate').value,period:$('prPeriod').value,hours:Number($('prHours')?.value||0),overtime:Number($('prOvertime')?.value||0),gross,bonus,retention,retentionType:retType,retentionDestination:retDest,retentionDueDate:retDue,advance:adv,deductions:ded,totalDeductions:retention+ded+adv,net,method:$('prMethod').value,note:$('prNote').value});const payrollId=payrollRef?.id||'';if(retention>0){await add('payrollRetentions',{payrollId,teamId:t.id,teamName:t.name,date:$('prDate').value,type:retType,destination:retDest,amount:retention,status:'Pendiente',dueDate:retDue,note:$('prNote').value});}if(adv>0){await add('payrollRetentions',{payrollId,teamId:t.id,teamName:t.name,date:$('prDate').value,type:'Adelanto al empleado',destination:t.name,amount:adv,status:'Aplicada',dueDate:$('prDate').value,paidAt:$('prDate').value,note:'Adelanto descontado en nómina'});}if(ded>0){await add('payrollRetentions',{payrollId,teamId:t.id,teamName:t.name,date:$('prDate').value,type:'Descuento interno',destination:'Empresa',amount:ded,status:'Aplicada',dueDate:$('prDate').value,paidAt:$('prDate').value,note:'Descuento aplicado en nómina'});}await add('cashflow',{date:$('prDate').value,type:'Gasto',concept:`Nómina ${t.name}`,amount:net,note:`Bruto ${money(gross)} · Bonos ${money(bonus)} · Retenciones ${money(retention)} → ${retDest} · Adelantos ${money(adv)} · Otros descuentos ${money(ded)} · Neto ${money(net)}`});e.target.reset();};
   $('purchaseForm').onsubmit=e=>{e.preventDefault();const s=supplierBy($('puSupplier').value);if(!s.id)return alert('Selecciona suplidor.');const subtotal=Number($('puSubtotal').value||0),tax=Number($('puTax').value||0),total=subtotal+tax;add('purchases',{supplierId:s.id,supplierName:s.name,date:$('puDate').value,dueDate:$('puDue').value,concept:$('puConcept').value,reference:$('puRef').value,number:$('puRef').value||('PO-'+String(Date.now()).slice(-6)),subtotal,tax,total,status:$('puStatus').value,note:$('puNote').value});e.target.reset();};
-  $('paymentForm').onsubmit=async e=>{e.preventDefault();const inv=state.invoices.find(x=>x.id===$('pInvoice').value);if(!inv)return alert('Selecciona factura.');if(invoiceStatus(inv)==='Cancelada')return alert('No se puede cobrar una factura cancelada.');const amount=Number($('pAmount').value||0);if(amount<=0)return alert('Monto inválido.');const bal=invoiceBalance(inv);if(amount>bal+0.01 && !confirm('El cobro excede el balance. ¿Registrar de todos modos?')) return;await add('payments',{invoiceId:inv.id,invoiceNumber:inv.number,date:$('pDate').value,method:$('pMethod').value,amount,note:$('pNote').value});await add('cashflow',{date:$('pDate').value,type:'Ingreso',concept:`Cobro ${inv.number}`,amount});const newBal=Math.max(0,bal-amount);await updateDoc(docPath('invoices',inv.id),{status:newBal<=0?'Pagada':amount>0?'Parcial':invoiceStatus(inv),updatedAt:serverTimestamp()});e.target.reset();};
+  $('paymentForm').onsubmit=async e=>{e.preventDefault();const inv=state.invoices.find(x=>x.id===$('pInvoice').value);if(!inv)return alert('Selecciona factura.');if(invoiceStatus(inv)==='Cancelada')return alert('No se puede cobrar una factura cancelada.');const amount=Number($('pAmount').value||0);if(amount<=0)return alert('Monto inválido.');const bal=invoiceBalance(inv);if(amount>bal+0.01 && !confirm('El cobro excede el balance. ¿Registrar de todos modos?')) return;const selectedMethod=$('pMethod').value;await add('payments',{invoiceId:inv.id,invoiceNumber:inv.number,date:$('pDate').value,method:selectedMethod,amount,note:$('pNote').value});await add('cashflow',{date:$('pDate').value,type:'Ingreso',concept:`Cobro ${inv.number}`,amount});const newBal=Math.max(0,bal-amount);await updateDoc(docPath('invoices',inv.id),{status:newBal<=0?'Pagada':amount>0?'Parcial':invoiceStatus(inv),paymentMethod:selectedMethod,updatedAt:serverTimestamp()});e.target.reset();};
   $('cashForm').onsubmit=e=>{e.preventDefault();add('cashflow',{date:$('xDate').value,type:$('xType').value,concept:$('xConcept').value,amount:Number($('xAmount').value||0)});e.target.reset();};
   $('saveSettings').onclick=saveSettings;$('invoiceFromService').onclick=()=>{const s=state.services.find(s=>!state.invoices.some(i=>i.serviceId===s.id));if(s)createInvoice(s.id);else alert('No hay servicios pendientes de facturar.');};
   document.querySelectorAll('.report-option').forEach(b=>b.onclick=()=>selectReport(b.dataset.reportType));
@@ -2274,7 +2276,18 @@ add=async function(c,data){
 };
 
 function authUI(){$('authIndustry').innerHTML=Object.entries(INDUSTRIES).map(([id,x])=>`<option value="${id}">${T(x.name)}</option>`).join('');$('showLogin').onclick=()=>{mode='login';document.querySelectorAll('.register-only').forEach(x=>x.classList.add('hidden'));$('authSubmit').textContent=T('Entrar');$('showLogin').classList.add('active');$('showRegister').classList.remove('active');};$('showRegister').onclick=()=>{mode='register';document.querySelectorAll('.register-only').forEach(x=>x.classList.remove('hidden'));$('authSubmit').textContent=T('Crear cuenta');$('showRegister').classList.add('active');$('showLogin').classList.remove('active');};$('authForm').onsubmit=async e=>{e.preventDefault();$('authMsg').textContent=T('Procesando...');try{if(mode==='register'){const cred=await createUserWithEmailAndPassword(auth,$('authEmail').value,$('authPassword').value);await setDoc(doc(db,'users',cred.user.uid),{...defaultProfile(),businessName:$('authBusiness').value||'Mi Negocio',industry:$('authIndustry').value,email:$('authEmail').value});}else await signInWithEmailAndPassword(auth,$('authEmail').value,$('authPassword').value);$('authMsg').textContent='';}catch(err){$('authMsg').textContent=err.message;}};}
-async function load(){unsub.forEach(x=>x());unsub=[];const snap=await getDoc(profRef());if(!snap.exists())await setDoc(profRef(),defaultProfile());unsub.push(onSnapshot(profRef(),s=>{state.profile=s.data()||defaultProfile();render();}));COLS.forEach(c=>unsub.push(onSnapshot(colPath(c),s=>{state[c]=s.docs.map(d=>({id:d.id,...d.data()}));$('syncStatus').textContent=T('Sincronizado');render();},e=>{$('syncStatus').textContent=T('Firebase bloqueado');console.error(e);})));}
+let portalSyncTimer=null;
+function scheduleEnabledPortalSync(){
+  clearTimeout(portalSyncTimer);
+  portalSyncTimer=setTimeout(async()=>{
+    const enabled=(state.clients||[]).filter(c=>c.portalEnabled&&c.portalToken);
+    for(const c of enabled){
+      try{await syncClientPortal(c.id,{openAfter:false,copyLink:false,notify:false});}
+      catch(e){console.warn('No se pudo sincronizar portal de '+(c.name||c.id),e);}
+    }
+  },1200);
+}
+async function load(){unsub.forEach(x=>x());unsub=[];const snap=await getDoc(profRef());if(!snap.exists())await setDoc(profRef(),defaultProfile());unsub.push(onSnapshot(profRef(),s=>{state.profile=s.data()||defaultProfile();render();}));COLS.forEach(c=>unsub.push(onSnapshot(colPath(c),s=>{state[c]=s.docs.map(d=>({id:d.id,...d.data()}));$('syncStatus').textContent=T('Sincronizado');render();if(['clients','services','quotes','followups','invoices','payments','assets'].includes(c))scheduleEnabledPortalSync();},e=>{$('syncStatus').textContent=T('Firebase bloqueado');console.error(e);})));}
 authUI();bindForms();onAuthStateChanged(auth,u=>{if(u){$('authScreen').classList.add('hidden');$('appShell').classList.remove('hidden');load();}else{$('authScreen').classList.remove('hidden');$('appShell').classList.add('hidden');}});
 
 /* V66 — Search Center por módulo
@@ -2601,7 +2614,7 @@ kpis=function(){
 /* V77 — Portal del Cliente
    Publica únicamente una copia sanitizada por cliente mediante un token privado. */
 function portalBaseUrl(){
-  const url=new URL('portal.html',window.location.href);
+  const url=new URL('./portal/',window.location.href);
   url.search=''; url.hash='';
   return url.toString();
 }
@@ -2613,7 +2626,7 @@ function portalInvoiceData(inv){
   const items=(inv.items||[]).map(i=>({description:i.description||i.desc||'',qty:Number(i.qty||1),price:Number(i.price||0)}));
   const subtotal=Number(inv.subtotal ?? items.reduce((a,i)=>a+(i.qty*i.price),0));
   const tax=Number(inv.tax ?? inv.ivu ?? Math.max(0,Number(inv.total||0)-subtotal));
-  return {id:inv.id,number:inv.number||'',date:inv.date||'',dueDate:inv.dueDate||'',serviceTitle:inv.serviceTitle||inv.serviceType||'',status:invoiceStatus(inv),subtotal,tax,taxPercent:Number(inv.taxPercent||profile().tax||0),total:Number(inv.total||subtotal+tax),paid:Number(invoicePaid(inv.id)||0),balance:Number(invoiceBalance(inv)||0),items,notes:inv.notes||'',terms:inv.terms||inv.conditions||''};
+  return {id:inv.id,number:inv.number||'',date:inv.date||'',dueDate:inv.dueDate||'',serviceTitle:inv.serviceTitle||inv.serviceType||'',status:invoiceStatus(inv),subtotal,tax,taxPercent:Number(inv.taxPercent||profile().tax||0),total:Number(inv.total||subtotal+tax),paid:Number(invoicePaid(inv.id)||0),balance:Number(invoiceBalance(inv)||0),items,notes:inv.notes||'',terms:invoicePaymentTerms(inv,inv.terms||inv.conditions||'Pago según acuerdo.'),paymentMethods:invoicePaymentMethods(inv)};
 }
 
 function portalQuoteData(q){
@@ -2624,9 +2637,14 @@ function portalServiceData(s){
   return {id:s.id,date:s.date||'',title:serviceTitle(s),status:s.status||'Pendiente',assetName:s.assetName||'',amount:Number(serviceAmount(s)||0),notes:s.notes||s.note||'',fields:Array.isArray(s.fields)?s.fields:[]};
 }
 function portalAssetData(a){
-  return {id:a.id,name:assetName(a),brand:a.brand||'',model:a.model||'',serial:a.serial||'',location:a.location||'',status:assetStatus(a),purchaseDate:a.purchaseDate||'',warrantyExpiration:a.warrantyExpiration||a.expirationDate||'',nextMaintenance:a.nextMaintenance||'',notes:a.notes||a.note||''};
+  return {id:a.id,name:assetName(a),brand:a.brand||'',model:a.model||'',serial:a.serial||'',location:a.location||'',status:assetStatus(a),purchaseDate:a.purchaseDate||'',warrantyExpiration:a.warrantyExpirationDate||a.warrantyExpiration||a.expirationDate||'',nextMaintenance:a.nextMaintenanceDate||a.nextMaintenance||'',notes:a.notes||a.note||''};
 }
-async function syncClientPortal(clientId,{openAfter=true}={}){
+function portalMaintenanceData(f){
+  const a=state.assets.find(x=>x.id===f.assetId)||{};
+  return {id:f.id,dueDate:f.dueDate||'',title:f.title||f.type||'Mantenimiento',type:f.type||'Mantenimiento',status:followupStatus(f),assetId:f.assetId||'',assetName:f.assetName||assetName(a)||'',priority:f.priority||'',note:f.note||''};
+}
+
+async function syncClientPortal(clientId,{openAfter=true,copyLink=true,notify=true}={}){
   const c=clientBy(clientId); if(!c.id){alert('Cliente no encontrado.');return;}
   const token=String(c.portalToken||'').trim()||newPortalToken();
   const p=profile();
@@ -2638,15 +2656,18 @@ async function syncClientPortal(clientId,{openAfter=true}={}){
     quotes:state.quotes.filter(x=>x.clientId===c.id).map(portalQuoteData).sort((a,b)=>String(b.date).localeCompare(String(a.date))),
     invoices:state.invoices.filter(x=>x.clientId===c.id).map(portalInvoiceData).sort((a,b)=>String(b.date).localeCompare(String(a.date))),
     services:state.services.filter(x=>x.clientId===c.id).map(portalServiceData).sort((a,b)=>String(b.date).localeCompare(String(a.date))),
-    assets:state.assets.filter(x=>x.clientId===c.id).map(portalAssetData)
+    assets:state.assets.filter(x=>x.clientId===c.id).map(portalAssetData),
+    maintenance:state.followups.filter(x=>x.clientId===c.id && String(x.type||'').toLowerCase().includes('mantenimiento') && followupStatus(x)!=='Cancelado').map(portalMaintenanceData).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate)))
   };
   await setDoc(doc(db,'clientPortals',token),payload,{merge:false});
   if(c.portalToken!==token || !c.portalEnabled) await updateDoc(docPath('clients',c.id),{portalToken:token,portalEnabled:true,portalUpdatedAt:new Date().toISOString()});
   const link=portalBaseUrl()+'?access='+encodeURIComponent(token);
-  const copied=await copyPortalLink(link);
+  const copied=copyLink?await copyPortalLink(link):false;
   if(openAfter) window.open(link,'_blank','noopener');
-  if(copied) alert('Portal actualizado. El enlace privado fue copiado.');
-  else window.prompt('Portal actualizado. Safari no permitió copiar automáticamente. Copia este enlace:',link);
+  if(notify&&copyLink){
+    if(copied) alert('Portal actualizado. El enlace privado fue copiado.');
+    else window.prompt('Portal actualizado. Safari no permitió copiar automáticamente. Copia este enlace:',link);
+  }
   return link;
 }
 async function copyPortalLink(link){

@@ -30,6 +30,8 @@ function docRef(c, id){ return doc(db, 'users', uid(), c, id); }
 function clientBy(id){ return state.clients.find(c => c.id === id) || {}; }
 function taxRate(){ return Number(state.profile?.tax || 11.5) / 100; }
 function invoicePaid(inv){ return state.payments.filter(p => p.invoiceId === inv.id).reduce((a, p) => a + Number(p.amount || 0), 0); }
+function invoicePaymentMethods(inv){ return [...new Set(state.payments.filter(p => p.invoiceId === inv.id).map(p => String(p.method || '').trim()).filter(Boolean))]; }
+function invoicePaymentTerms(inv, fallback='Pago según acuerdo.'){ const methods=invoicePaymentMethods(inv); if(!methods.length) return fallback; return `${methods.length>1?'Métodos de pago':'Método de pago'}: ${methods.join(', ')}.`; }
 function invoiceBalance(inv){ return Math.max(0, Number(inv.total || 0) - invoicePaid(inv)); }
 function invoiceStatus(inv){ const bal = invoiceBalance(inv), paid = invoicePaid(inv); if(String(inv.status||'') === 'Cancelada') return 'Cancelada'; if(String(inv.status||'') === 'Borrador') return 'Borrador'; if(bal <= 0 || String(inv.status||'') === 'Pagada') return 'Pagada'; if(inv.dueDate && inv.dueDate < today()) return 'Vencida'; return paid > 0 ? 'Parcial' : 'Pendiente'; }
 function statusBadge(status){ const s = String(status || 'Pendiente'); const cls = s === 'Pagada' || s === 'Completado' ? 'ok' : (s === 'Vencida' || s === 'Urgente' || s === 'Vencido' ? 'danger' : (s === 'Próximo' || s === 'Parcial' || s === 'Pendiente' ? 'warn' : '')); return `<span class="badge ${cls}">${esc(s)}</span>`; }
@@ -415,7 +417,7 @@ async function completeFollowup(id){
     alert(firebaseMessage(err));
   }
 }
-async function markInvoicePaid(id){ const inv = state.invoices.find(i => i.id === id); if(!inv) return; const bal = invoiceBalance(inv); if(bal <= 0) return; await addDoc(colRef('payments'), { invoiceId:inv.id, invoiceNumber:inv.number, date:today(), method:'Móvil', amount:bal, note:'Pago registrado desde Nexus Mobile', createdAt:serverTimestamp() }); await updateDoc(docRef('invoices', id), { status:'Pagada', updatedAt:serverTimestamp() }); }
+async function markInvoicePaid(id){ const inv = state.invoices.find(i => i.id === id); if(!inv) return; const bal = invoiceBalance(inv); if(bal <= 0) return; await addDoc(colRef('payments'), { invoiceId:inv.id, invoiceNumber:inv.number, date:today(), method:'Móvil', amount:bal, note:'Pago registrado desde Nexus Mobile', createdAt:serverTimestamp() }); await updateDoc(docRef('invoices', id), { status:'Pagada', paymentMethod:'Móvil', updatedAt:serverTimestamp() }); }
 async function imageToDataUrl(src){
   if(!src) return '';
   try{
@@ -589,7 +591,7 @@ async function buildInvoicePdfFile(inv, filename){
 
   box(M, lowerY+92, 240, 76, { stroke:line, fill:[255,255,255] });
   txt('CONDICIONES', M+12, lowerY+110, { size:7.5, bold:true, color:blue });
-  wrap(inv.terms || inv.conditions || 'Pago según acuerdo.', 216).slice(0,4).forEach((l,i)=>txt(l, M+12, lowerY+130+i*11, { size:8 }));
+  wrap(invoicePaymentTerms(inv, inv.terms || inv.conditions || 'Pago según acuerdo.'), 216).slice(0,4).forEach((l,i)=>txt(l, M+12, lowerY+130+i*11, { size:8 }));
 
   const tx = W - M - 210;
   const tw = 210;
@@ -769,7 +771,7 @@ function buildDesktopInvoiceDocument(inv){
   const itemList = Array.isArray(inv.items) && inv.items.length ? inv.items : [{ description:inv.serviceTitle || inv.invoiceType || 'Servicio', qty:1, price:totals.subtotal }];
   const rows = itemList.map(it => `<tr><td>${esc(it.description || 'Servicio')}</td><td>${esc(it.qty || 1)}</td><td>${money(it.price || 0)}</td><td>${money(Number(it.qty || 1) * Number(it.price || 0))}</td></tr>`).join('');
   const note = esc(inv.notes || 'Gracias por confiar en nuestros servicios.');
-  const terms = esc(inv.terms || inv.conditions || 'Pago a través del método acordado.');
+  const terms = esc(invoicePaymentTerms(inv, inv.terms || inv.conditions || 'Pago a través del método acordado.'));
   return `<div class="doc-page invoice-pro"><div class="doc-body"><div class="invoice-top"><div class="invoice-brand">${logo ? `<img class="invoice-logo" src="${logo}">` : ''}<div><h1>${esc(p.businessName || 'Empresa')}</h1>${p.email ? `<p>${esc(p.email)}</p>` : ''}</div></div><div class="invoice-contact"><p>${esc(p.address || '')}</p>${p.phone ? `<p>${esc(p.phone)}</p>` : ''}${p.email ? `<p>${esc(p.email)}</p>` : ''}${p.web ? `<p>${esc(p.web)}</p>` : ''}</div></div><div class="invoice-title-row"><div class="invoice-number"><p><b>No. de Factura:</b> ${esc(inv.number || 'Factura')}</p><p><b>Fecha:</b> ${esc(niceDate(inv.date))}</p><p><b>Vence:</b> ${esc(inv.dueDate ? niceDate(inv.dueDate) : '—')}</p></div><h2>FACTURA</h2><div class="status-card"><b>ESTADO</b><span>${esc(status).toUpperCase()}</span></div></div><div class="invoice-rule"></div><div class="invoice-client-grid"><div class="invoice-box"><b>CLIENTE</b><p>${esc(inv.clientName || c.name || '')}</p></div><div class="invoice-box"><p><b>Teléfono:</b> ${esc(c.phone || '—')}</p><p><b>Dirección:</b> ${esc(c.address || c.city || '—')}</p></div></div><table class="doc-table invoice-items"><tr><th>Descripción</th><th>Cant.</th><th>Precio Unit.</th><th>Total</th></tr>${rows}</table><div class="invoice-lower"><div><div class="invoice-box note-box"><b>NOTAS</b><p>${note}</p></div><div class="invoice-box note-box"><b>CONDICIONES</b><p>${terms}</p></div>${p.signature ? `<div class="invoice-sign"><img src="${p.signature}"><br>Firma autorizada</div>` : ''}</div><div class="invoice-totals"><div><b>SUBTOTAL</b><span>${money(totals.subtotal)}</span></div><div><b>IVU (${totals.taxPercent}%)</b><span>${money(totals.ivu)}</span></div><div class="total-row"><b>TOTAL</b><span>${money(totals.total)}</span></div><div><b>PAGADO</b><span>${money(paid)}</span></div><div class="balance-row"><b>BALANCE</b><span>${money(bal)}</span></div></div></div>` + invoiceDocFooter();
 }
 function openInvoiceDoc(id, supplied=null){
