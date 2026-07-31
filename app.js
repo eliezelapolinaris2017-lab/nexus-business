@@ -164,7 +164,7 @@ function formatSSNInput(value){const d=cleanSSN(value); if(!d)return ''; if(d.le
 function maskSSN(value){const d=cleanSSN(value); return d.length>=4 ? `***-**-${d.slice(-4)}` : '***-**-****';}
 function vehicleAssetOptions(){return state.assets.filter(a=>String(assetCategory(a)).toLowerCase().includes('veh') || String(assetName(a)).toLowerCase().includes('veh'))}
 
-function invoicePaid(inv){return state.payments.filter(p=>p.invoiceId===inv.id).reduce((t,p)=>t+Number(p.amount||0),0);}
+function invoicePaid(inv){const id=typeof inv==='string'?inv:inv?.id;return state.payments.filter(p=>p.invoiceId===id).reduce((t,p)=>t+Number(p.amount||0),0);}
 function invoiceBalance(inv){return Math.max(0,Number(inv.total||0)-invoicePaid(inv));}
 function dateValue(d){return d ? new Date(String(d)+'T00:00:00').getTime() : 0;}
 function invoiceStatus(inv){
@@ -335,40 +335,182 @@ function serviceOptions(){
 }
 
 
-function serviceTemplates(indId=profile().industry){
+function templateId(){
+  return 'tpl_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+}
+function normalizeServiceTemplate(t={},indId=profile().industry){
+  const rawItems=Array.isArray(t.items)?t.items:[];
+  return {
+    id:String(t.id||templateId()),
+    name:String(t.name||'Nueva plantilla').trim()||'Nueva plantilla',
+    category:String(t.category||'General').trim()||'General',
+    favorite:Boolean(t.favorite),
+    serviceType:String(t.serviceType||t.name||'').trim(),
+    title:String(t.title||t.name||'').trim(),
+    items:normalizeLineItems(rawItems).filter(x=>String(x.description||'').trim()||Number(x.price||0)>0),
+    fields:Array.isArray(t.fields)?t.fields.map(x=>String(x??'')):[],
+    estimatedMinutes:Number(t.estimatedMinutes||0),
+    warranty:String(t.warranty||''),
+    notes:String(t.notes||''),
+    usageCount:Number(t.usageCount||0),
+    industry:String(t.industry||indId)
+  };
+}
+function seededServiceTemplates(indId=profile().industry){
   const map={
     hvac:[
-      {name:'Diagnóstico',items:[['Diagnóstico técnico',1,75]],fields:['Diagnóstico HVAC','','','','']},
-      {name:'Mantenimiento',items:[['Mantenimiento profundo',1,75],['Tratamiento drenaje',1,0]],fields:['Mantenimiento profundo','','','','']},
-      {name:'Instalación',items:[['Mano de obra instalación',1,600],['Materiales básicos',1,150]],fields:['Instalación mini split','','','','']}
+      {name:'Diagnóstico',category:'Diagnóstico',favorite:true,items:[['Diagnóstico técnico',1,75]],fields:['Diagnóstico HVAC','','','',''],estimatedMinutes:60},
+      {name:'Mantenimiento',category:'Mantenimiento',favorite:true,items:[['Mantenimiento profundo',1,75],['Tratamiento drenaje',1,0]],fields:['Mantenimiento profundo','','','',''],estimatedMinutes:90},
+      {name:'Instalación',category:'Instalación',items:[['Mano de obra instalación',1,600],['Materiales básicos',1,150]],fields:['Instalación mini split','','','',''],estimatedMinutes:240}
     ],
     salon:[
-      {name:'Corte / Blower',items:[['Corte',1,25],['Blower',1,35]],fields:['Corte y blower','','','','']},
-      {name:'Color',items:[['Color',1,75],['Secado',1,35]],fields:['Color','','','','']},
-      {name:'Uñas',items:[['Manicura gel',1,55]],fields:['Uñas gel','','','','']}
+      {name:'Corte / Blower',category:'Cabello',favorite:true,items:[['Corte',1,25],['Blower',1,35]],fields:['Corte y blower','','','','']},
+      {name:'Color',category:'Cabello',items:[['Color',1,75],['Secado',1,35]],fields:['Color','','','','']},
+      {name:'Uñas',category:'Uñas',items:[['Manicura gel',1,55]],fields:['Uñas gel','','','','']}
     ],
     transport:[
-      {name:'Ruta local',items:[['Ruta local',1,180]],fields:['Ruta local','']},
-      {name:'Carga liviana',items:[['Carga liviana',1,240]],fields:['Carga liviana','']},
-      {name:'Ruta larga',items:[['Ruta larga',1,425],['Peajes / manejo',1,50]],fields:['Ruta larga','']}
+      {name:'Ruta local',category:'Rutas',favorite:true,items:[['Ruta local',1,180]],fields:['Ruta local','']},
+      {name:'Carga liviana',category:'Carga',items:[['Carga liviana',1,240]],fields:['Carga liviana','']},
+      {name:'Ruta larga',category:'Rutas',items:[['Ruta larga',1,425],['Peajes / manejo',1,50]],fields:['Ruta larga','']}
     ],
     handyman:[
-      {name:'Plomería',items:[['Plomería liviana',1,115],['Materiales',1,50]],fields:['Plomería liviana','','','','']},
-      {name:'Electricidad',items:[['Electricidad liviana',1,95]],fields:['Electricidad liviana','','','','']},
-      {name:'Pintura',items:[['Mano de obra pintura',1,275],['Materiales',1,75]],fields:['Pintura','','','','']}
+      {name:'Plomería',category:'Plomería',items:[['Plomería liviana',1,115],['Materiales',1,50]],fields:['Plomería liviana','','','','']},
+      {name:'Electricidad',category:'Electricidad',items:[['Electricidad liviana',1,95]],fields:['Electricidad liviana','','','','']},
+      {name:'Pintura',category:'Pintura',items:[['Mano de obra pintura',1,275],['Materiales',1,75]],fields:['Pintura','','','','']}
     ],
     cleaning:[
-      {name:'Limpieza profunda',items:[['Limpieza profunda',1,275],['Productos especiales',1,50]],fields:['Limpieza profunda','','','','']},
-      {name:'Recurrente',items:[['Limpieza recurrente',1,180]],fields:['Mantenimiento recurrente','','','','']},
-      {name:'Post-construcción',items:[['Limpieza post-construcción',1,520]],fields:['Post-construcción','','','','']}
+      {name:'Limpieza profunda',category:'Profunda',favorite:true,items:[['Limpieza profunda',1,275],['Productos especiales',1,50]],fields:['Limpieza profunda','','','','']},
+      {name:'Recurrente',category:'Recurrente',items:[['Limpieza recurrente',1,180]],fields:['Mantenimiento recurrente','','','','']},
+      {name:'Post-construcción',category:'Especial',items:[['Limpieza post-construcción',1,520]],fields:['Post-construcción','','','','']}
     ],
     construction:[
-      {name:'Estimado',items:[['Visita / estimado',1,75]],fields:['Estimado','','','','']},
-      {name:'Supervisión',items:[['Supervisión de obra',1,950]],fields:['Supervisión','','','','']},
-      {name:'Terminaciones',items:[['Mano de obra terminaciones',1,1600],['Materiales',1,500]],fields:['Terminaciones','','','','']}
+      {name:'Estimado',category:'Estimados',favorite:true,items:[['Visita / estimado',1,75]],fields:['Estimado','','','','']},
+      {name:'Supervisión',category:'Supervisión',items:[['Supervisión de obra',1,950]],fields:['Supervisión','','','','']},
+      {name:'Terminaciones',category:'Terminaciones',items:[['Mano de obra terminaciones',1,1600],['Materiales',1,500]],fields:['Terminaciones','','','','']}
     ]
   };
-  return map[indId]||map.hvac;
+  return (map[indId]||map.hvac).map((t,n)=>normalizeServiceTemplate({...t,id:`seed_${indId}_${n}`,industry:indId},indId));
+}
+function serviceTemplates(indId=profile().industry){
+  const lib=profile().serviceTemplateLibrary;
+  const arr=lib && Array.isArray(lib[indId]) ? lib[indId] : null;
+  return (arr && arr.length ? arr : seededServiceTemplates(indId)).map(t=>normalizeServiceTemplate(t,indId));
+}
+async function saveServiceTemplates(list,indId=profile().industry){
+  const clean=list.map(t=>normalizeServiceTemplate(t,indId));
+  const library={...(profile().serviceTemplateLibrary||{}),[indId]:clean};
+  state.profile={...profile(),serviceTemplateLibrary:library};
+  await setDoc(profRef(),{serviceTemplateLibrary:library,updatedAt:serverTimestamp()},{merge:true});
+  return clean;
+}
+function templateCategories(){
+  return [...new Set(serviceTemplates().map(t=>t.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'es'));
+}
+function quickTemplateBarHtml(){
+  const templates=serviceTemplates();
+  const cats=templateCategories();
+  return `<div class="wide quick-template-bar">
+    <div class="quick-template-heading"><div><label>Plantillas rápidas</label><small class="muted">Aplica servicios y partidas guardadas con un clic.</small></div><button type="button" class="ghost" id="manageServiceTemplates">⚙ Administrar plantillas</button></div>
+    <div class="quick-template-tools"><input id="templateSearch" type="search" placeholder="Buscar plantilla"><select id="templateCategory"><option value="">Todas las categorías</option>${cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</select><label class="template-favorite-filter"><input id="templateFavoritesOnly" type="checkbox"> Solo favoritas</label></div>
+    <div id="quickTemplateButtons" class="quick-template-buttons">${templates.map(t=>`<button type="button" class="ghost quick-template-button" data-service-template-id="${esc(t.id)}" data-template-search="${esc([t.name,t.category,t.title,t.notes].join(' ').toLowerCase())}" data-template-category="${esc(t.category)}" data-template-favorite="${t.favorite?'1':'0'}"><span>${t.favorite?'★ ':''}${esc(t.name)}</span><small>${esc(t.category)} · ${t.items.length} partida${t.items.length===1?'':'s'}${t.usageCount?` · ${t.usageCount} usos`:''}</small></button>`).join('')}</div>
+    <button type="button" class="ghost" id="duplicateLastService">Duplicar último servicio</button>
+  </div>`;
+}
+function filterQuickTemplateButtons(){
+  const q=String($('templateSearch')?.value||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  const cat=$('templateCategory')?.value||'';
+  const fav=Boolean($('templateFavoritesOnly')?.checked);
+  document.querySelectorAll('[data-service-template-id]').forEach(btn=>{
+    const text=String(btn.dataset.templateSearch||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    btn.hidden=Boolean((q&&!text.includes(q))||(cat&&btn.dataset.templateCategory!==cat)||(fav&&btn.dataset.templateFavorite!=='1'));
+  });
+}
+async function applyServiceTemplate(id){
+  const list=serviceTemplates();
+  const tpl=list.find(t=>t.id===id);
+  if(!tpl) return alert('No se encontró la plantilla.');
+  const type=tpl.serviceType||tpl.name;
+  if($('sServiceType')){
+    if(type && ![...$('sServiceType').options].some(o=>o.value===type)) $('sServiceType').insertAdjacentHTML('beforeend',`<option value="${esc(type)}">${esc(type)}</option>`);
+    if(type) $('sServiceType').value=type;
+  }
+  if($('sTitle')) $('sTitle').value=tpl.title||tpl.name||'';
+  (tpl.fields||[]).forEach((v,n)=>{const el=$('sF'+n);if(el)el.value=v||'';});
+  setServiceItems(tpl.items.length?tpl.items:[{description:tpl.name,qty:1,price:0}]);
+  updateServiceTotal();
+  tpl.usageCount=Number(tpl.usageCount||0)+1;
+  try{await saveServiceTemplates(list);}catch(e){console.warn('No se pudo actualizar el contador de plantilla',e);}
+}
+function templateLinesText(items=[]){
+  return normalizeLineItems(items).map(it=>`${String(it.description||'').replace(/\|/g,'/')} | ${Number(it.qty||1)} | ${Number(it.price||0)}`).join('\n');
+}
+function parseTemplateLines(text=''){
+  return String(text).split(/\r?\n/).map(line=>line.trim()).filter(Boolean).map(line=>{
+    const p=line.split('|').map(x=>x.trim());
+    return {description:p[0]||'',qty:Number(p[1]||1),price:Number(p[2]||0)};
+  }).filter(x=>x.description||x.price>0);
+}
+function ensureTemplateManager(){
+  let m=$('templateManagerModal');
+  if(m) return m;
+  m=document.createElement('div');
+  m.id='templateManagerModal';m.className='edit-modal hidden';
+  m.innerHTML=`<div class="edit-backdrop" data-close-template-manager></div><div class="edit-panel card template-manager-panel"><div class="edit-head"><div><span class="pill">Servicios</span><h2>Biblioteca de plantillas rápidas</h2></div><button class="icon-btn" type="button" data-close-template-manager>×</button></div><div class="template-manager-actions"><button class="primary" type="button" id="newServiceTemplate">+ Nueva plantilla</button><button class="ghost" type="button" id="exportServiceTemplates">Exportar JSON</button><label class="ghost template-import-label">Importar JSON<input id="importServiceTemplates" type="file" accept="application/json,.json" hidden></label></div><div class="template-manager-grid"><div><input id="managerTemplateSearch" type="search" placeholder="Buscar en la biblioteca"><div id="templateManagerList" class="template-manager-list"></div></div><form id="templateEditor" class="template-editor"><input id="tplEditId" type="hidden"><div class="template-editor-empty">Selecciona una plantilla o crea una nueva.</div></form></div></div>`;
+  document.body.appendChild(m);
+  m.querySelectorAll('[data-close-template-manager]').forEach(x=>x.onclick=()=>m.classList.add('hidden'));
+  $('newServiceTemplate').onclick=()=>editServiceTemplate(null);
+  $('exportServiceTemplates').onclick=exportServiceTemplates;
+  $('importServiceTemplates').onchange=importServiceTemplates;
+  $('managerTemplateSearch').oninput=renderTemplateManagerList;
+  return m;
+}
+function renderTemplateManagerList(){
+  const box=$('templateManagerList');if(!box)return;
+  const q=String($('managerTemplateSearch')?.value||'').trim().toLowerCase();
+  const list=serviceTemplates().filter(t=>!q||[t.name,t.category,t.title,t.notes].join(' ').toLowerCase().includes(q));
+  box.innerHTML=list.length?list.map(t=>`<div class="template-manager-item"><button type="button" class="template-manager-select" data-template-edit="${esc(t.id)}"><b>${t.favorite?'★ ':''}${esc(t.name)}</b><small>${esc(t.category)} · ${t.items.length} partidas · ${t.usageCount||0} usos</small></button><div><button type="button" class="ghost mini" data-template-duplicate="${esc(t.id)}">Duplicar</button><button type="button" class="danger mini" data-template-delete="${esc(t.id)}">Eliminar</button></div></div>`).join(''):'<p class="muted">No hay plantillas.</p>';
+  box.querySelectorAll('[data-template-edit]').forEach(b=>b.onclick=()=>editServiceTemplate(b.dataset.templateEdit));
+  box.querySelectorAll('[data-template-duplicate]').forEach(b=>b.onclick=()=>duplicateServiceTemplate(b.dataset.templateDuplicate));
+  box.querySelectorAll('[data-template-delete]').forEach(b=>b.onclick=()=>deleteServiceTemplate(b.dataset.templateDelete));
+}
+function editServiceTemplate(id){
+  const current=serviceTemplates().find(t=>t.id===id)||normalizeServiceTemplate({id:templateId(),name:'Nueva plantilla',category:'General',items:[{description:'',qty:1,price:0}]});
+  const f=$('templateEditor');if(!f)return;
+  f.innerHTML=`<input id="tplEditId" type="hidden" value="${esc(current.id)}"><div><label>Nombre</label><input id="tplName" value="${esc(current.name)}" required></div><div><label>Categoría</label><input id="tplCategory" value="${esc(current.category)}" list="templateCategoryList"></div><datalist id="templateCategoryList">${templateCategories().map(c=>`<option value="${esc(c)}">`).join('')}</datalist><div><label>Tipo de servicio</label><input id="tplServiceType" value="${esc(current.serviceType)}"></div><div><label>Título / descripción principal</label><input id="tplTitle" value="${esc(current.title)}"></div><div><label>Tiempo estimado (minutos)</label><input id="tplMinutes" type="number" min="0" value="${current.estimatedMinutes||0}"></div><div><label>Garantía</label><input id="tplWarranty" value="${esc(current.warranty)}"></div><label class="template-editor-favorite"><input id="tplFavorite" type="checkbox" ${current.favorite?'checked':''}> Marcar como favorita</label><div class="wide"><label>Partidas ilimitadas</label><textarea id="tplItems" rows="9" placeholder="Descripción | cantidad | precio">${esc(templateLinesText(current.items))}</textarea><small class="muted">Una partida por línea. Ejemplo: Mantenimiento profundo | 1 | 75</small></div><div class="wide"><label>Notas internas</label><textarea id="tplNotes" rows="3">${esc(current.notes)}</textarea></div><div class="wide template-editor-actions"><button type="button" class="ghost" id="cancelTemplateEdit">Limpiar</button><button type="submit" class="primary">Guardar plantilla</button></div>`;
+  f.onsubmit=saveTemplateEditor;
+  $('cancelTemplateEdit').onclick=()=>{f.innerHTML='<div class="template-editor-empty">Selecciona una plantilla o crea una nueva.</div>';};
+}
+async function saveTemplateEditor(e){
+  e.preventDefault();
+  const id=$('tplEditId')?.value||templateId();
+  const name=String($('tplName')?.value||'').trim();
+  if(!name)return alert('Escribe el nombre de la plantilla.');
+  const list=serviceTemplates();
+  const old=list.find(t=>t.id===id);
+  const tpl=normalizeServiceTemplate({...old,id,name,category:$('tplCategory')?.value||'General',serviceType:$('tplServiceType')?.value||name,title:$('tplTitle')?.value||name,estimatedMinutes:Number($('tplMinutes')?.value||0),warranty:$('tplWarranty')?.value||'',favorite:Boolean($('tplFavorite')?.checked),items:parseTemplateLines($('tplItems')?.value||''),notes:$('tplNotes')?.value||'',usageCount:old?.usageCount||0});
+  const next=old?list.map(t=>t.id===id?tpl:t):[tpl,...list];
+  try{await saveServiceTemplates(next);renderTemplateManagerList();editServiceTemplate(id);render();alert('Plantilla guardada.');}catch(err){console.error(err);alert('No se pudo guardar la plantilla. Verifica la conexión con Firebase.');}
+}
+async function duplicateServiceTemplate(id){
+  const list=serviceTemplates();const src=list.find(t=>t.id===id);if(!src)return;
+  const copy=normalizeServiceTemplate({...src,id:templateId(),name:`${src.name} copia`,usageCount:0});
+  await saveServiceTemplates([copy,...list]);renderTemplateManagerList();editServiceTemplate(copy.id);render();
+}
+async function deleteServiceTemplate(id){
+  const list=serviceTemplates();const src=list.find(t=>t.id===id);if(!src)return;
+  if(!confirm(`¿Eliminar la plantilla “${src.name}”?`))return;
+  await saveServiceTemplates(list.filter(t=>t.id!==id));renderTemplateManagerList();$('templateEditor').innerHTML='<div class="template-editor-empty">Selecciona una plantilla o crea una nueva.</div>';render();
+}
+function exportServiceTemplates(){
+  const blob=new Blob([JSON.stringify({version:1,industry:profile().industry,templates:serviceTemplates()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`plantillas-servicios-${profile().industry}-${today()}.json`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+async function importServiceTemplates(e){
+  const file=e.target.files?.[0];if(!file)return;
+  try{const data=JSON.parse(await file.text());const raw=Array.isArray(data)?data:data.templates;if(!Array.isArray(raw))throw new Error('Formato inválido');const incoming=raw.map(t=>normalizeServiceTemplate({...t,id:templateId()}));await saveServiceTemplates([...incoming,...serviceTemplates()]);renderTemplateManagerList();render();alert(`${incoming.length} plantilla(s) importada(s).`);}catch(err){alert('No se pudo importar el archivo JSON.');}finally{e.target.value='';}
+}
+function openServiceTemplateManager(){
+  const m=ensureTemplateManager();m.classList.remove('hidden');renderTemplateManagerList();
 }
 function clientTagHtml(c){
   const tags=String(c.tags||'').split(',').map(x=>x.trim()).filter(Boolean);
@@ -880,13 +1022,11 @@ function startServiceEdit(id){
   },0);
 }
 function bindServiceProductivity(){
-  document.querySelectorAll('[data-service-template]').forEach(btn=>btn.onclick=()=>{
-    const tpl=serviceTemplates()[Number(btn.dataset.serviceTemplate)]||{};
-    if($('sServiceType') && tpl.name) $('sServiceType').value = serviceOptions().includes(tpl.name)?tpl.name:($('sServiceType').value||serviceOptions()[0]);
-    if($('sTitle')) $('sTitle').value = tpl.name||'';
-    (tpl.fields||[]).forEach((v,n)=>{const el=$('sF'+n); if(el) el.value=v||'';});
-    setServiceItems(tpl.items||[]);
-  });
+  document.querySelectorAll('[data-service-template-id]').forEach(btn=>btn.onclick=()=>applyServiceTemplate(btn.dataset.serviceTemplateId));
+  if($('templateSearch')) $('templateSearch').oninput=filterQuickTemplateButtons;
+  if($('templateCategory')) $('templateCategory').onchange=filterQuickTemplateButtons;
+  if($('templateFavoritesOnly')) $('templateFavoritesOnly').onchange=filterQuickTemplateButtons;
+  if($('manageServiceTemplates')) $('manageServiceTemplates').onclick=openServiceTemplateManager;
   const dup=$('duplicateLastService');
   if(dup) dup.onclick=()=>{
     const last=[...state.services].sort((a,b)=>String(b.createdAt?.seconds||b.date||'').localeCompare(String(a.createdAt?.seconds||a.date||'')))[0];
@@ -899,12 +1039,11 @@ function bindServiceProductivity(){
     if($('sStatus')) $('sStatus').value='Pendiente';
     if($('sPriority')) $('sPriority').value=last.priority||'Normal';
     (last.fields||[]).forEach((v,n)=>{const el=$('sF'+n); if(el) el.value=v||'';});
-    if(last.route){['Origin','Destination','RouteMiles','RouteRate','RouteBase'].forEach(k=>{}); if($('sOrigin')) $('sOrigin').value=last.route.origin||''; if($('sDestination')) $('sDestination').value=last.route.destination||''; if($('sRouteMiles')) $('sRouteMiles').value=last.route.miles||''; if($('sRouteRate')) $('sRouteRate').value=last.route.rate||''; if($('sRouteBase')) $('sRouteBase').value=last.route.base||'';}
+    if(last.route){if($('sOrigin')) $('sOrigin').value=last.route.origin||'';if($('sDestination')) $('sDestination').value=last.route.destination||'';if($('sRouteMiles')) $('sRouteMiles').value=last.route.miles||'';if($('sRouteRate')) $('sRouteRate').value=last.route.rate||'';if($('sRouteBase')) $('sRouteBase').value=last.route.base||'';}
     setServiceItems((last.items||[]).map(it=>[it.description,it.qty,it.price]));
     updateTransportTotal();
   };
 }
-
 function serviceItemsText(s){
   const items = s.items || [];
   if(items.length) return items.map(it=>`${it.qty || 1} × ${it.description || 'Servicio'} · ${money(it.price || 0)}`).join('<br>');
@@ -1106,7 +1245,7 @@ function bindClientImporter(){
 function forms(){const i=industry();
   $('clientsTitle').textContent=i.clients;$('servicesTitle').textContent=i.services;if($('quotesTitle'))$('quotesTitle').textContent='Cotizaciones Pro';if($('followupsTitle'))$('followupsTitle').textContent='Seguimiento';$('teamTitle').textContent=i.team;$('assetsTitle').textContent=i.assets;$('payrollTitle').textContent=i.payroll;$('suppliersTitle').textContent=i.suppliers;$('supplierPaymentsTitle').textContent=i.supplierPayments;
   $('clientForm').innerHTML=input('Nombre','cName')+input('Teléfono','cPhone')+input('Email','cEmail')+input('Municipio','cCity')+input('Dirección','cAddress','text','','wide')+input('Contacto alterno','cAltName')+input('Tel. alterno','cAltPhone')+input('Email alterno','cAltEmail')+clientTagsSelectHtml('cTags','VIP')+input('Notas administrativas','cNotes','text','','wide')+'<button class="primary" type="submit">Guardar</button>';
-  $('serviceForm').innerHTML=`<div class="wide quick-template-bar"><label>Plantillas rápidas</label><div>${serviceTemplates().map((t,n)=>`<button type="button" class="ghost" data-service-template="${n}">${esc(t.name)}</button>`).join('')}<button type="button" class="ghost" id="duplicateLastService">Duplicar último</button></div></div>`+select(i.client,'sClient',state.clients.map(c=>({value:c.id,label:c.name})))+select('Activo relacionado','sAsset',[{value:'',label:'Sin activo'}].concat(state.assets.map(a=>({value:a.id,label:assetLabel(a)}))),'')+select(i.team,'sTeam',state.team.map(t=>({value:t.id,label:t.name})))+input('Fecha','sDate','date',today())+select('Estado','sStatus',[{value:'Pendiente',label:'Pendiente'},{value:'En proceso',label:'En proceso'},{value:'Completado',label:'Completado'},{value:'Facturado',label:'Facturado'}],'Pendiente')+select('Prioridad','sPriority',[{value:'Normal',label:'Normal'},{value:'Alta',label:'Alta'},{value:'Urgente',label:'Urgente'}],'Normal')+select('Servicio','sServiceType',serviceOptions().map(x=>({value:x,label:x})))+input('Descripción principal','sTitle','text','','wide')+input('Monto facturado','sAmount','number')+transportRouteFormHtml()+i.serviceFields.map((f,n)=>input(f,'sF'+n,'text','','wide')).join('')+`<div id="serviceEditBanner" class="wide edit-banner hidden"></div><div class="wide service-lines-card"><div class="line-head"><div><b>Partidas</b></div><strong id="sItemsTotal">$0.00</strong></div><div id="serviceItemsBox">${itemRowsHtml()}</div><button id="addServiceLine" class="ghost" type="button">+ Añadir servicio</button></div><div class="wide form-actions"><button id="serviceSubmitBtn" class="primary" type="submit">Guardar</button><button id="cancelServiceEdit" class="ghost hidden" type="button">Cancelar edición</button></div>`;
+  $('serviceForm').innerHTML=quickTemplateBarHtml()+select(i.client,'sClient',state.clients.map(c=>({value:c.id,label:c.name})))+select('Activo relacionado','sAsset',[{value:'',label:'Sin activo'}].concat(state.assets.map(a=>({value:a.id,label:assetLabel(a)}))),'')+select(i.team,'sTeam',state.team.map(t=>({value:t.id,label:t.name})))+input('Fecha','sDate','date',today())+select('Estado','sStatus',[{value:'Pendiente',label:'Pendiente'},{value:'En proceso',label:'En proceso'},{value:'Completado',label:'Completado'},{value:'Facturado',label:'Facturado'}],'Pendiente')+select('Prioridad','sPriority',[{value:'Normal',label:'Normal'},{value:'Alta',label:'Alta'},{value:'Urgente',label:'Urgente'}],'Normal')+select('Servicio','sServiceType',serviceOptions().map(x=>({value:x,label:x})))+input('Descripción principal','sTitle','text','','wide')+input('Monto facturado','sAmount','number')+transportRouteFormHtml()+i.serviceFields.map((f,n)=>input(f,'sF'+n,'text','','wide')).join('')+`<div id="serviceEditBanner" class="wide edit-banner hidden"></div><div class="wide service-lines-card"><div class="line-head"><div><b>Partidas</b></div><strong id="sItemsTotal">$0.00</strong></div><div id="serviceItemsBox">${itemRowsHtml()}</div><button id="addServiceLine" class="ghost" type="button">+ Añadir servicio</button></div><div class="wide form-actions"><button id="serviceSubmitBtn" class="primary" type="submit">Guardar</button><button id="cancelServiceEdit" class="ghost hidden" type="button">Cancelar edición</button></div>`;
   if($('quoteForm')) $('quoteForm').innerHTML=select(i.client,'qClient',state.clients.map(c=>({value:c.id,label:c.name})))+select('Activo relacionado','qAsset',[{value:'',label:'Sin activo'}].concat(state.assets.map(a=>({value:a.id,label:assetLabel(a)}))),'')+select(i.team,'qTeam',[{value:'',label:'Sin asignar'}].concat(state.team.map(t=>({value:t.id,label:t.name}))))+input('Fecha','qDate','date',today())+input('Válida hasta','qValid','date',plusDays(15))+select('Estado','qStatus',['Borrador','Enviada','Aprobada','Rechazada','Convertida'].map(x=>({value:x,label:x})),'Borrador')+select('Prioridad','qPriority',['Normal','Alta','Urgente'].map(x=>({value:x,label:x})),'Normal')+select('Servicio','qServiceType',serviceOptions().map(x=>({value:x,label:x})))+input('Descripción profesional','qTitle','text','','wide')+input('Notas','qNotes','text','','wide')+input('Términos','qTerms','text','Precios válidos hasta la fecha indicada. Aprobación requerida para iniciar servicio.','wide')+`<div id="quoteEditBanner" class="wide edit-banner hidden"></div><div class="wide service-lines-card quote-lines-card"><div class="line-head"><div><b>Partidas de cotización</b><small class="muted">Servicio, materiales, mano de obra y extras.</small></div><strong id="qItemsTotal">$0.00</strong></div><div id="quoteItemsBox">${itemRowsHtml()}</div><button id="addQuoteLine" class="ghost" type="button">+ Añadir partida</button></div><div class="wide form-actions"><button id="quoteSubmitBtn" class="primary" type="submit">Guardar cotización</button><button id="cancelQuoteEdit" class="ghost hidden" type="button">Cancelar edición</button></div>`;
   $('teamForm').innerHTML=input('Nombre','tName')+input('Teléfono','tPhone')+input('Email','tEmail')+input('Identificación personal ID','tPersonalId')+input('Seguro Social','tSsn','text','','','')+input('Licencia de conducir','tDriverLicense')+select('Vehículo asignado','tAssignedVehicle',[{value:'',label:'Sin vehículo'}].concat(vehicleAssetOptions().map(a=>({value:a.id,label:assetLabel(a)}))))+input('Puesto / Rol','tRole')+select('Estado','tStatus',['Activo','Inactivo','Contratista'].map(x=>({value:x,label:x})))+input('Salario base','tSalary','number','0')+input('% Comisión','tRate','number','0')+input('% Retención','tRetention','number','0')+input('Fecha ingreso','tStart','date',today())+'<button class="primary" type="submit">Guardar</button>';
   $('assetForm').innerHTML=select('Cliente asignado','aClient',[{value:'',label:'Sin cliente'}].concat(state.clients.map(c=>({value:c.id,label:c.name}))))+input('Nombre del activo','aName')+select('Categoría','aCategory',['Equipo','Vehículo','Herramienta','Mobiliario','Infraestructura','Tecnología','Inventario Especial','Otro'].map(x=>({value:x,label:x})))+input('Marca','aBrand')+input('Modelo','aModel')+input('Número de serie','aSerial')+input('Ubicación','aLocation')+select('Estado','aStatus',['Activo','En uso','En garantía','Requiere mantenimiento','Fuera de servicio','Inactivo','Baja'].map(x=>({value:x,label:x})))+input('Valor estimado','aValue','number')+input('Fecha de registro','aDate','date',today())+input('Fecha de compra','aPurchaseDate','date')+input('Caducidad del activo/documento','aExpiration','date')+input('Vencimiento de garantía','aWarrantyExpiration','date')+input('Próximo mantenimiento','aNextMaintenance','date')+input('Garantía / vigencia','aWarranty','text','','wide')+input('Notas administrativas','aNotes','text','','wide')+'<button class="primary" type="submit">Guardar activo</button>';
@@ -1606,9 +1745,105 @@ async function editServiceRecord(id){
 }
 
 
+
+function invoiceEditorItemsHtml(items){
+  const arr=(Array.isArray(items)&&items.length)?items:[{description:'',qty:1,price:0}];
+  return arr.map((it,idx)=>`<div class="service-line invoice-edit-line" data-invoice-edit-line>
+    <div class="line-number">${idx+1}</div>
+    <input class="invoice-edit-desc" placeholder="Descripción de la partida" value="${esc(it.description||'')}">
+    <input class="invoice-edit-qty" type="number" min="0" step="0.01" placeholder="Cant." value="${esc(it.qty??1)}">
+    <input class="invoice-edit-price" type="number" min="0" step="0.01" placeholder="Precio" value="${esc(it.price??0)}">
+    <button class="danger mini" data-remove-invoice-line type="button">×</button>
+  </div>`).join('');
+}
+function readInvoiceEditorItems(){
+  return [...document.querySelectorAll('[data-invoice-edit-line]')].map(row=>({
+    description:row.querySelector('.invoice-edit-desc')?.value.trim()||'',
+    qty:Number(row.querySelector('.invoice-edit-qty')?.value||0),
+    price:Number(row.querySelector('.invoice-edit-price')?.value||0)
+  })).filter(x=>x.description||x.qty||x.price);
+}
+function recalcInvoiceEditor(){
+  const items=readInvoiceEditorItems();
+  const subtotal=items.reduce((a,x)=>a+(Number(x.qty||0)*Number(x.price||0)),0);
+  const taxPercent=Number($('edit_invoice_taxPercent')?.value||0);
+  const ivu=subtotal*(taxPercent/100);
+  const total=subtotal+ivu;
+  const paid=Number($('edit_invoice_paid')?.dataset.value||0);
+  const balance=Math.max(0,total-paid);
+  if($('edit_invoice_subtotal')) $('edit_invoice_subtotal').value=subtotal.toFixed(2);
+  if($('edit_invoice_ivu')) $('edit_invoice_ivu').value=ivu.toFixed(2);
+  if($('edit_invoice_total')) $('edit_invoice_total').value=total.toFixed(2);
+  if($('edit_invoice_balance')) $('edit_invoice_balance').textContent=money(balance);
+  if($('edit_invoice_result_status')) $('edit_invoice_result_status').textContent=total<=paid?'Pagada':paid>0?'Parcial':'Pendiente';
+}
+function bindInvoiceEditor(){
+  const addBtn=$('edit_addInvoiceLine');
+  if(addBtn) addBtn.onclick=()=>{
+    const box=$('editInvoiceItemsBox'); if(!box)return;
+    box.insertAdjacentHTML('beforeend',invoiceEditorItemsHtml([{description:'',qty:1,price:0}]));
+    bindInvoiceEditor(); recalcInvoiceEditor();
+  };
+  document.querySelectorAll('[data-remove-invoice-line]').forEach(btn=>btn.onclick=()=>{
+    const rows=document.querySelectorAll('[data-invoice-edit-line]');
+    const row=btn.closest('[data-invoice-edit-line]');
+    if(rows.length>1) row.remove(); else row.querySelectorAll('input').forEach((el,i)=>el.value=i===1?'1':'');
+    bindInvoiceEditor(); recalcInvoiceEditor();
+  });
+  document.querySelectorAll('.invoice-edit-desc,.invoice-edit-qty,.invoice-edit-price').forEach(el=>el.oninput=recalcInvoiceEditor);
+  if($('edit_invoice_taxPercent')) $('edit_invoice_taxPercent').oninput=recalcInvoiceEditor;
+  recalcInvoiceEditor();
+}
+async function editInvoiceRecord(id){
+  const inv=state.invoices.find(x=>x.id===id); if(!inv)return;
+  const m=ensureEditModal(); state.editing={c:'invoices',id};
+  const paid=invoicePaid(inv);
+  const totals=invoiceTotals(inv);
+  const items=(Array.isArray(inv.items)&&inv.items.length)?inv.items:[{description:inv.serviceTitle||'Servicio',qty:1,price:totals.subtotal||inv.total||0}];
+  $('editTitle').textContent=`Editar factura ${inv.number||''}`;
+  $('editForm').innerHTML=`
+    <div class="wide paid-invoice-editor-note"><b>${paid>0?'Esta factura tiene pagos registrados.':'Edición completa de factura'}</b><span>Los cobros asociados no se eliminarán. Al cambiar el total, el balance y el estado se recalcularán automáticamente.</span></div>
+    ${input('Número de factura','edit_invoice_number','text',inv.number||'')}
+    ${input('Fecha','edit_invoice_date','date',inv.date||today())}
+    ${input('Vencimiento','edit_invoice_dueDate','date',inv.dueDate||'')}
+    ${editSelectHtml('Cliente','edit_invoice_clientId',state.clients.map(x=>({value:x.id,label:x.name})),inv.clientId||'')}
+    ${input('Servicio / título','edit_invoice_serviceTitle','text',inv.serviceTitle||inv.serviceType||'','wide')}
+    <div class="wide"><div class="invoice-edit-head"><label>Partidas de la factura</label><button id="edit_addInvoiceLine" type="button" class="ghost">+ Añadir partida</button></div><div id="editInvoiceItemsBox" class="service-lines">${invoiceEditorItemsHtml(items)}</div></div>
+    ${input('IVU %','edit_invoice_taxPercent','number',Number(inv.taxPercent??profile().tax??0))}
+    ${input('Subtotal','edit_invoice_subtotal','number',totals.subtotal,'','readonly')}
+    ${input('IVU','edit_invoice_ivu','number',totals.ivu,'','readonly')}
+    ${input('Total','edit_invoice_total','number',totals.total,'','readonly')}
+    <div><label>Pagado</label><div id="edit_invoice_paid" class="invoice-edit-money" data-value="${paid}">${money(paid)}</div></div>
+    <div><label>Balance resultante</label><div id="edit_invoice_balance" class="invoice-edit-money">${money(invoiceBalance(inv))}</div></div>
+    <div><label>Estado resultante</label><div id="edit_invoice_result_status" class="invoice-edit-money">${invoiceStatus(inv)}</div></div>
+    <div class="wide"><label>Notas</label><textarea id="edit_invoice_notes" rows="3">${esc(inv.notes||'')}</textarea></div>
+    <div class="wide"><label>Términos y condiciones</label><textarea id="edit_invoice_terms" rows="3">${esc(inv.terms||inv.conditions||'Pago según acuerdo.')}</textarea></div>`;
+  $('editSave').onclick=async()=>{
+    try{
+      const client=clientBy($('edit_invoice_clientId').value);
+      const newItems=readInvoiceEditorItems();
+      if(!newItems.length) throw new Error('Añade al menos una partida a la factura.');
+      const subtotal=newItems.reduce((a,x)=>a+(Number(x.qty||0)*Number(x.price||0)),0);
+      const taxPercent=Number($('edit_invoice_taxPercent').value||0);
+      const ivu=subtotal*(taxPercent/100);
+      const total=subtotal+ivu;
+      const status=String(inv.status||'').toLowerCase()==='cancelada'?'Cancelada':(total<=paid?'Pagada':paid>0?'Parcial':'Pendiente');
+      await updateDoc(docPath('invoices',id),{
+        number:$('edit_invoice_number').value.trim(),date:$('edit_invoice_date').value,dueDate:$('edit_invoice_dueDate').value,
+        clientId:client.id||'',clientName:client.name||'',serviceTitle:$('edit_invoice_serviceTitle').value.trim(),
+        items:newItems,subtotal,ivu,tax:ivu,taxPercent,total,status,notes:$('edit_invoice_notes').value,terms:$('edit_invoice_terms').value,updatedAt:serverTimestamp()
+      });
+      closeEditModal();
+    }catch(err){alert(err.message||err);}
+  };
+  ['edit_invoice_subtotal','edit_invoice_ivu','edit_invoice_total'].forEach(x=>{const el=$(x);if(el){el.readOnly=true;el.tabIndex=-1;}});
+  bindInvoiceEditor();
+  m.classList.remove('hidden');
+}
 async function editRecord(c,id){
   if(c==='services') return editServiceRecord(id);
   if(c==='quotes') return editQuoteRecord(id);
+  if(c==='invoices') return editInvoiceRecord(id);
   const arr=state[c]||[],original=arr.find(x=>x.id===id); if(!original)return;
   const r=normalizeEditRecord(c,original);
   const m=ensureEditModal(); state.editing={c,id};
