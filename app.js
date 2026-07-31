@@ -2136,9 +2136,27 @@ function openConfiguredCalendar(){
   if(!url){alert('Configura primero el enlace del calendario en Configuración.');return;}
   window.open(url,'_blank','noopener');
 }
+function isQuoteFollowup(f){
+  const type=String(f?.type||'').toLowerCase();
+  const source=String(f?.sourceType||'').toLowerCase();
+  const title=String(f?.title||'').toLowerCase();
+  return type.includes('cotiz') || source==='quote' || title.includes('cotiz');
+}
 function followupMessage(f){
   const c=clientBy(f.clientId||'');
   const name=String(f.clientName||c.name||'').trim();
+  if(isQuoteFollowup(f)){
+    const quote=state.quotes.find(q=>q.id===f.sourceId) || {};
+    const number=String(f.quoteNumber||quote.number||'').trim();
+    const reference=number ? ` ${number}` : '';
+    return `Hola${name?', '+name:''}. 👋
+
+Le escribimos para dar seguimiento a la cotización${reference} que le enviamos. Deseamos confirmar si pudo revisarla y saber si tiene alguna pregunta, necesita algún ajuste o desea continuar con el servicio.
+
+Quedamos atentos para ayudarle y coordinar los próximos pasos.
+
+Gracias por considerar a Oasis Air Cleaner Services LLC.`;
+  }
   return `Hola${name?', '+name:''}. 👋
 
 Solo queríamos darle seguimiento desde nuestra última visita para asegurarnos de que su aire acondicionado continúe funcionando correctamente.

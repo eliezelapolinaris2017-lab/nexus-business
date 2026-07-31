@@ -327,7 +327,39 @@ function renderInvoices(){
 }
 function followStatus(f){ if(String(f.status || '') === 'Completado') return 'Completado'; const d = String(f.dueDate || ''); if(d && d < today()) return 'Vencida'; if(d && d <= plusDays(14)) return 'Próximo'; return f.status || 'Programado'; }
 function followupRows(){ return [...state.followups].sort((a,b) => String(a.dueDate || '').localeCompare(String(b.dueDate || ''))); }
-function followCard(f){ const c = clientBy(f.clientId); const phone = phoneLink(c); const name=String(f.clientName||c.name||'').trim(); const text=`Hola${name?', '+name:''}. 👋\n\nSolo queríamos darle seguimiento desde nuestra última visita para asegurarnos de que su aire acondicionado continúe funcionando correctamente.\n\nSi desea programar su próximo mantenimiento o necesita asistencia, estaremos encantados de ayudarle.\n\n📅 Agende su cita cuando le sea más conveniente:\nhttps://confirmafy.com/oasis-services-pr\n\nGracias por confiar en Oasis Air Cleaner Services LLC.`; return `<div class="row-card"><div class="top"><div><h4>${esc(f.title || f.type || 'Seguimiento')}</h4><p>${esc(f.clientName || c.name || 'Cliente')} · ${esc(f.dueDate || 'Sin fecha')}</p></div>${statusBadge(followStatus(f))}</div><p>${esc(f.type || '')} · cada ${esc(f.intervalMonths || 6)} meses</p><div class="actions">${phone ? `<a href="${phone}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<button data-complete-follow="${esc(f.id)}" type="button">Completar</button><button class="danger" data-delete-follow="${esc(f.id)}" type="button">Borrar</button></div></div>`; }
+function mobileIsQuoteFollowup(f){
+  const type=String(f?.type||'').toLowerCase();
+  const source=String(f?.sourceType||'').toLowerCase();
+  const title=String(f?.title||'').toLowerCase();
+  return type.includes('cotiz') || source==='quote' || title.includes('cotiz');
+}
+function mobileFollowupMessage(f,c){
+  const name=String(f.clientName||c.name||'').trim();
+  if(mobileIsQuoteFollowup(f)){
+    const quote=state.quotes.find(q=>q.id===f.sourceId) || {};
+    const number=String(f.quoteNumber||quote.number||'').trim();
+    const reference=number ? ` ${number}` : '';
+    return `Hola${name?', '+name:''}. 👋
+
+Le escribimos para dar seguimiento a la cotización${reference} que le enviamos. Deseamos confirmar si pudo revisarla y saber si tiene alguna pregunta, necesita algún ajuste o desea continuar con el servicio.
+
+Quedamos atentos para ayudarle y coordinar los próximos pasos.
+
+Gracias por considerar a Oasis Air Cleaner Services LLC.`;
+  }
+  return `Hola${name?', '+name:''}. 👋
+
+Solo queríamos darle seguimiento desde nuestra última visita para asegurarnos de que su aire acondicionado continúe funcionando correctamente.
+
+Si desea programar su próximo mantenimiento o necesita asistencia, estaremos encantados de ayudarle.
+
+📅 Agende su cita cuando le sea más conveniente:
+https://confirmafy.com/oasis-services-pr
+
+Gracias por confiar en Oasis Air Cleaner Services LLC.`;
+}
+function followCard(f){ const c = clientBy(f.clientId); const phone = phoneLink(c); const text=mobileFollowupMessage(f,c); return `<div class="row-card"><div class="top"><div><h4>${esc(f.title || f.type || 'Seguimiento')}</h4><p>${esc(f.clientName || c.name || 'Cliente')} · ${esc(f.dueDate || 'Sin fecha')}</p></div>${statusBadge(followStatus(f))}</div><p>${esc(f.type || '')} · cada ${esc(f.intervalMonths || 6)} meses</p><div class="actions">${phone ? `<a href="${phone}?text=${encodeURIComponent(text)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}<button data-complete-follow="${esc(f.id)}" type="button">Completar</button><button class="danger" data-delete-follow="${esc(f.id)}" type="button">Borrar</button></div></div>`; }
+
 function renderFollowups(){
   let rows = followupRows();
   if(currentFilter === 'due') rows = rows.filter(f => followStatus(f) === 'Vencida');
