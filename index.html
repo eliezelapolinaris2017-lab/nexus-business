@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Nexus Business PR SaaS</title>
   <link id="faviconLink" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-size='30' fill='white' font-family='Arial'%3EN%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=67" />
+  <link rel="stylesheet" href="styles.css?v=85" />
 
   <style id="criticalModuleLayout">
     /* V12 CRITICAL: un módulo visible a la vez. No más módulos apilados. */
@@ -90,6 +90,18 @@
           <div class="contact-import-actions"><select id="clientImportMode"><option value="skip">Omitir duplicados</option><option value="update">Actualizar duplicados</option><option value="create">Crear todos</option></select><button id="analyzeClientPaste" type="button">Analizar texto</button><button id="commitClientImport" class="primary" type="button" disabled>Importar contactos</button></div>
           <div id="clientImportSummary" class="muted"></div><div id="clientImportPreview"></div>
         </div><div id="clientsTable"></div></div></section>
+
+      <section id="directory" class="view" hidden aria-hidden="true">
+        <div class="card directory-module">
+          <div class="section-head"><div><h2>📍 Directorio de Clientes</h2><p class="muted">Encuentra direcciones y abre la ruta sin buscar en conversaciones.</p></div><span id="directoryCount" class="limit-chip"></span></div>
+          <div class="directory-toolbar">
+            <input id="directorySearch" type="search" placeholder="Buscar por cliente, calle, urbanización, pueblo o número de casa..." autocomplete="off">
+            <label class="directory-fav-filter"><input id="directoryFavoritesOnly" type="checkbox"> Solo favoritos</label>
+            <button id="directoryClear" type="button" class="ghost">Limpiar</button>
+          </div>
+          <div id="directoryList" class="directory-list"></div>
+        </div>
+      </section>
       <section id="services" class="view" hidden aria-hidden="true"><div class="card"><div class="section-head"><h2 id="servicesTitle">Servicios</h2><span id="servicesLimit" class="limit-chip"></span></div><form id="serviceForm" class="form-grid"></form><div id="servicesTable"></div></div></section>
       <section id="quotes" class="view" hidden aria-hidden="true"><div class="card"><div class="section-head"><div><h2 id="quotesTitle">Cotizaciones Pro</h2><p class="muted">Cotización → aprobación → servicio → factura.</p></div><span id="quotesLimit" class="limit-chip"></span></div><form id="quoteForm" class="form-grid"></form><div id="quotesTable"></div></div></section>
       <section id="followups" class="view" hidden aria-hidden="true"><div class="card"><div class="section-head"><div><h2 id="followupsTitle">Seguimiento</h2><p class="muted">Mantenimientos cada 6 meses, cotizaciones, instalaciones y recordatorios.</p></div><span id="followupsLimit" class="limit-chip"></span></div><form id="followupForm" class="form-grid"></form><div id="followupsTable"></div></div></section>
@@ -171,6 +183,6 @@
   </div>
 
   <script type="module" src="payment-links.js?v=51"></script>
-  <script type="module" src="app.js?v=77"></script>
+  <script type="module" src="app.js?v=85"></script>
 </body>
 </html>
