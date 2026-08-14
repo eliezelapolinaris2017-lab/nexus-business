@@ -50,15 +50,15 @@ function applyLanguage(){
 }
 function setHtml(el,html){ if(!el)return; el.innerHTML = lang()==='en' ? tSub(html) : html; }
 
-const COLS = ['clients','services','quotes','followups','team','assets','suppliers','supplierPayments','payroll','payrollRetentions','purchases','invoices','payments','cashflow','planRequests'];
+const COLS = ['clients','services','quotes','followups','contracts','team','assets','suppliers','supplierPayments','payroll','payrollRetentions','purchases','invoices','payments','cashflow','planRequests'];
 
 const INDUSTRIES = {
-  hvac:{name:'HVAC',logo:'HV',color:'#0ea5e9',client:'Cliente',clients:'Clientes',service:'Servicio HVAC',services:'Servicios HVAC',team:'Técnicos',payroll:'Nómina técnicos',assets:'Activos',suppliers:'Suplidores HVAC',supplierPayments:'Pagos a suplidores',hero:'Diagnósticos, mantenimientos, garantías, facturas, nómina, suplidores y cobros.',nav:['dashboard','clients','directory','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Tipo de servicio','Equipo / Marca','BTU / Modelo','Diagnóstico','Garantía'],assetFields:['Marca','Modelo','BTU','Serial','Ubicación'],supplierFields:['Categoría','Marca principal','Términos','Notas']},
-  salon:{name:'Salón / Barbería',logo:'SB',color:'#a855f7',client:'Cliente',clients:'Clientes',service:'Cita',services:'Agenda y Citas',team:'Estilistas',payroll:'Pagos estilistas',assets:'Activos',suppliers:'Suplidores belleza',supplierPayments:'Pagos a suplidores',hero:'Agenda, servicios de belleza, productos, comisiones, cobros y reportes.',nav:['dashboard','clients','directory','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Servicio','Profesional','Hora','Duración','Notas de estilo'],assetFields:['Área','Silla / Estación','Estado','Notas'],supplierFields:['Categoría','Producto principal','Términos','Notas']},
-  transport:{name:'Transporte',logo:'TR',color:'#2563eb',client:'Cliente',clients:'Clientes',service:'Servicio',services:'Servicios de Transporte',team:'Choferes',payroll:'Pagos a choferes',assets:'Activos',suppliers:'Suplidores / Talleres',supplierPayments:'Pagos a suplidores',hero:'Rutas, millas, facturación, cobros, comisiones, retenciones, flota y suplidores.',nav:['dashboard','clients','directory','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Tipo de carga','Evidencia / referencia'],assetFields:['Unidad','Tablilla','VIN','Marbete','Seguro'],supplierFields:['Categoría','Servicio principal','Términos','Notas']},
-  handyman:{name:'Handyman',logo:'HM',color:'#f97316',client:'Cliente',clients:'Clientes',service:'Trabajo',services:'Trabajos',team:'Personal',payroll:'Pagos personal',assets:'Activos',suppliers:'Suplidores materiales',supplierPayments:'Pagos a suplidores',hero:'Trabajos livianos, materiales, evidencias, cobros, nómina y suplidores.',nav:['dashboard','clients','directory','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Categoría','Área','Materiales','Prioridad','Observaciones'],assetFields:['Herramienta','Estado','Costo','Asignado a'],supplierFields:['Categoría','Material principal','Términos','Notas']},
-  cleaning:{name:'Limpieza',logo:'CL',color:'#14b8a6',client:'Cliente',clients:'Clientes',service:'Limpieza',services:'Servicios de Limpieza',team:'Personal',payroll:'Nómina personal',assets:'Activos',suppliers:'Suplidores productos',supplierPayments:'Pagos a suplidores',hero:'Limpiezas residenciales/comerciales, productos, nómina, suplidores, cobros y reportes.',nav:['dashboard','clients','directory','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Tipo de limpieza','Área','Frecuencia','Productos','Notas'],assetFields:['Producto / Equipo','Cantidad','Costo','Ubicación'],supplierFields:['Categoría','Producto principal','Términos','Notas']},
-  construction:{name:'Construcción',logo:'CO',color:'#64748b',client:'Cliente',clients:'Clientes',service:'Proyecto',services:'Proyectos',team:'Equipo',payroll:'Pagos de obra',assets:'Activos',suppliers:'Suplidores construcción',supplierPayments:'Pagos a suplidores',hero:'Proyectos, etapas, materiales, pagos de obra, suplidores, evidencias y reportes.',nav:['dashboard','clients','directory','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Tipo de proyecto','Dirección','Etapa','Materiales','Notas técnicas'],assetFields:['Material / Equipo','Cantidad','Costo','Proveedor'],supplierFields:['Categoría','Material principal','Términos','Notas']}
+  hvac:{name:'HVAC',logo:'HV',color:'#0ea5e9',client:'Cliente',clients:'Clientes',service:'Servicio HVAC',services:'Servicios HVAC',team:'Técnicos',payroll:'Nómina técnicos',assets:'Activos',suppliers:'Suplidores HVAC',supplierPayments:'Pagos a suplidores',hero:'Diagnósticos, mantenimientos, garantías, facturas, nómina, suplidores y cobros.',nav:['dashboard','clients','directory','contracts','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Tipo de servicio','Equipo / Marca','BTU / Modelo','Diagnóstico','Garantía'],assetFields:['Marca','Modelo','BTU','Serial','Ubicación'],supplierFields:['Categoría','Marca principal','Términos','Notas']},
+  salon:{name:'Salón / Barbería',logo:'SB',color:'#a855f7',client:'Cliente',clients:'Clientes',service:'Cita',services:'Agenda y Citas',team:'Estilistas',payroll:'Pagos estilistas',assets:'Activos',suppliers:'Suplidores belleza',supplierPayments:'Pagos a suplidores',hero:'Agenda, servicios de belleza, productos, comisiones, cobros y reportes.',nav:['dashboard','clients','directory','contracts','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Servicio','Profesional','Hora','Duración','Notas de estilo'],assetFields:['Área','Silla / Estación','Estado','Notas'],supplierFields:['Categoría','Producto principal','Términos','Notas']},
+  transport:{name:'Transporte',logo:'TR',color:'#2563eb',client:'Cliente',clients:'Clientes',service:'Servicio',services:'Servicios de Transporte',team:'Choferes',payroll:'Pagos a choferes',assets:'Activos',suppliers:'Suplidores / Talleres',supplierPayments:'Pagos a suplidores',hero:'Rutas, millas, facturación, cobros, comisiones, retenciones, flota y suplidores.',nav:['dashboard','clients','directory','contracts','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Tipo de carga','Evidencia / referencia'],assetFields:['Unidad','Tablilla','VIN','Marbete','Seguro'],supplierFields:['Categoría','Servicio principal','Términos','Notas']},
+  handyman:{name:'Handyman',logo:'HM',color:'#f97316',client:'Cliente',clients:'Clientes',service:'Trabajo',services:'Trabajos',team:'Personal',payroll:'Pagos personal',assets:'Activos',suppliers:'Suplidores materiales',supplierPayments:'Pagos a suplidores',hero:'Trabajos livianos, materiales, evidencias, cobros, nómina y suplidores.',nav:['dashboard','clients','directory','contracts','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Categoría','Área','Materiales','Prioridad','Observaciones'],assetFields:['Herramienta','Estado','Costo','Asignado a'],supplierFields:['Categoría','Material principal','Términos','Notas']},
+  cleaning:{name:'Limpieza',logo:'CL',color:'#14b8a6',client:'Cliente',clients:'Clientes',service:'Limpieza',services:'Servicios de Limpieza',team:'Personal',payroll:'Nómina personal',assets:'Activos',suppliers:'Suplidores productos',supplierPayments:'Pagos a suplidores',hero:'Limpiezas residenciales/comerciales, productos, nómina, suplidores, cobros y reportes.',nav:['dashboard','clients','directory','contracts','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Tipo de limpieza','Área','Frecuencia','Productos','Notas'],assetFields:['Producto / Equipo','Cantidad','Costo','Ubicación'],supplierFields:['Categoría','Producto principal','Términos','Notas']},
+  construction:{name:'Construcción',logo:'CO',color:'#64748b',client:'Cliente',clients:'Clientes',service:'Proyecto',services:'Proyectos',team:'Equipo',payroll:'Pagos de obra',assets:'Activos',suppliers:'Suplidores construcción',supplierPayments:'Pagos a suplidores',hero:'Proyectos, etapas, materiales, pagos de obra, suplidores, evidencias y reportes.',nav:['dashboard','clients','directory','contracts','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],serviceFields:['Tipo de proyecto','Dirección','Etapa','Materiales','Notas técnicas'],assetFields:['Material / Equipo','Cantidad','Costo','Proveedor'],supplierFields:['Categoría','Material principal','Términos','Notas']}
 };
 
 const DEMOS = {
@@ -113,15 +113,15 @@ const DEMOS = {
 };
 
 const PLANS = {
-  free:{name:'Free',price:'$0',badge:'Básico',limits:{clients:5,services:10,quotes:10,followups:25,team:1,assets:0,suppliers:0,supplierPayments:0,payroll:0,purchases:0,invoices:3,payments:3,cashflow:5},modules:['dashboard','clients','directory','services','quotes','followups','billing','plans','settings'],features:['5 clientes','10 servicios','3 facturas','Sin nómina','Sin suplidores','Sin reportes avanzados']},
-  pro:{name:'Pro',price:'$19.99/mes',badge:'Profesional',limits:{clients:500,services:1000,quotes:1000,followups:1000,team:10,assets:100,suppliers:25,supplierPayments:100,payroll:100,purchases:100,invoices:500,payments:500,cashflow:1000},modules:['dashboard','clients','directory','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],features:['Nómina básica','Suplidores','Logo en facturas','Reportes PDF','500 clientes']},
-  business:{name:'Business',price:'$39.99/mes',badge:'Premium',limits:{clients:5000,services:10000,quotes:10000,followups:10000,team:50,assets:1000,suppliers:500,supplierPayments:2000,payroll:2000,purchases:2000,invoices:5000,payments:5000,cashflow:10000},modules:['dashboard','clients','directory','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],features:['White-label completo','Nómina avanzada','Control de suplidores','Firma digital','Reportes ejecutivos']},
-  enterprise:{name:'Enterprise',price:'Custom',badge:'Corporativo',limits:{clients:Infinity,services:Infinity,quotes:Infinity,followups:Infinity,team:Infinity,assets:Infinity,suppliers:Infinity,supplierPayments:Infinity,payroll:Infinity,purchases:Infinity,invoices:Infinity,payments:Infinity,cashflow:Infinity},modules:['dashboard','clients','directory','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],features:['Ilimitado','Dominio personalizado','Roles futuros','Soporte corporativo']}
+  free:{name:'Free',price:'$0',badge:'Básico',limits:{clients:5,services:10,quotes:10,followups:25,team:1,assets:0,suppliers:0,supplierPayments:0,payroll:0,purchases:0,invoices:3,payments:3,cashflow:5},modules:['dashboard','clients','directory','contracts','services','quotes','followups','billing','plans','settings'],features:['5 clientes','10 servicios','3 facturas','Sin nómina','Sin suplidores','Sin reportes avanzados']},
+  pro:{name:'Pro',price:'$19.99/mes',badge:'Profesional',limits:{clients:500,services:1000,quotes:1000,followups:1000,team:10,assets:100,suppliers:25,supplierPayments:100,payroll:100,purchases:100,invoices:500,payments:500,cashflow:1000},modules:['dashboard','clients','directory','contracts','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],features:['Nómina básica','Suplidores','Logo en facturas','Reportes PDF','500 clientes']},
+  business:{name:'Business',price:'$39.99/mes',badge:'Premium',limits:{clients:5000,services:10000,quotes:10000,followups:10000,team:50,assets:1000,suppliers:500,supplierPayments:2000,payroll:2000,purchases:2000,invoices:5000,payments:5000,cashflow:10000},modules:['dashboard','clients','directory','contracts','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],features:['White-label completo','Nómina avanzada','Control de suplidores','Firma digital','Reportes ejecutivos']},
+  enterprise:{name:'Enterprise',price:'Custom',badge:'Corporativo',limits:{clients:Infinity,services:Infinity,quotes:Infinity,followups:Infinity,team:Infinity,assets:Infinity,suppliers:Infinity,supplierPayments:Infinity,payroll:Infinity,purchases:Infinity,invoices:Infinity,payments:Infinity,cashflow:Infinity},modules:['dashboard','clients','directory','contracts','services','quotes','followups','team','payroll','assets','suppliers','supplierPayments','purchases','billing','payments','cashflow','reports','plans','settings'],features:['Ilimitado','Dominio personalizado','Roles futuros','Soporte corporativo']}
 };
 
-const TITLES = {dashboard:'Home',clients:'Clientes',directory:'Directorio',services:'Servicios',quotes:'Cotizaciones Pro',followups:'Seguimiento',team:'Equipo',payroll:'Nómina',assets:'Activos',suppliers:'Suplidores',supplierPayments:'Pagos suplidores',purchases:'Compras',billing:'Facturación',payments:'Cobros',cashflow:'Flujo de caja',reports:'Reportes',plans:'Planes',settings:'Configuración'};
+const TITLES = {dashboard:'Home',clients:'Clientes',directory:'Directorio',contracts:'Contratos de servicios',services:'Servicios',quotes:'Cotizaciones Pro',followups:'Seguimiento',team:'Equipo',payroll:'Nómina',assets:'Activos',suppliers:'Suplidores',supplierPayments:'Pagos suplidores',purchases:'Compras',billing:'Facturación',payments:'Cobros',cashflow:'Flujo de caja',reports:'Reportes',plans:'Planes',settings:'Configuración'};
 let mode = 'login', unsub = [];
-let state = {profile:null,clients:[],services:[],quotes:[],followups:[],team:[],assets:[],suppliers:[],supplierPayments:[],payroll:[],payrollRetentions:[],purchases:[],invoices:[],payments:[],cashflow:[],planRequests:[],previewHtml:'',activeView:'dashboard',editingServiceId:null,editingQuoteId:null,billingFilter:'all',billingSearch:'',directorySearch:'',directoryFavoritesOnly:false};
+let state = {profile:null,clients:[],services:[],quotes:[],followups:[],contracts:[],team:[],assets:[],suppliers:[],supplierPayments:[],payroll:[],payrollRetentions:[],purchases:[],invoices:[],payments:[],cashflow:[],planRequests:[],previewHtml:'',activeView:'dashboard',editingServiceId:null,editingQuoteId:null,editingContractId:null,billingFilter:'all',billingSearch:'',directorySearch:'',directoryFavoritesOnly:false};
 
 function defaultProfile(){return {businessName:'Mi Negocio',industry:'hvac',language:'es',plan:'free',planStatus:'active',planChangeMode:'manual',pendingPlan:'',pendingPlanStatus:'none',phone:'',whatsapp:'',email:auth.currentUser?.email||'',address:'',web:'',tax:'11.5',merchant:'',representative:'',slogan:'',logoDashboard:'',logoPdf:'',favicon:'',signature:'',primaryColor:'#2563eb',secondaryColor:'#0f172a',customServices:{},transportRatePerMile:'2.50',transportBaseCharge:'0',dailyGoal:'1000',onboardingComplete:false,onboardingSkipped:false,createdAt:new Date().toISOString()};}
 function profile(){return state.profile || defaultProfile();}
@@ -1362,7 +1362,140 @@ function renderHomePolish(){
   document.querySelectorAll('[data-control-view]').forEach(b=>b.onclick=()=>show(b.dataset.controlView));
 }
 
-function render(){setVisuals();nav();forms();bindServiceItems();bindQuoteItems();bindServiceProductivity();if(isTransport()){['sOrigin','sDestination','sRouteMiles','sRouteRate','sRouteBase'].forEach(id=>$(id)&&($(id).oninput=updateTransportTotal));updateTransportTotal();}kpis();renderHomePolish();tables();bindDirectoryControls();plans();renderWelcomeCenter();enforceModuleView();$('pageTitle').textContent=T(TITLES[state.activeView]||state.activeView);$('pageSubtitle').textContent=state.activeView==='dashboard'?T('Resumen operativo, financiero y alertas'):' ';applyLanguage();}
+
+/* V90 — Contratos de servicios (módulo nativo)
+   Usa la misma sesión, Firestore y ciclo de render de Nexus. */
+function contractNumber(){
+  const year=new Date().getFullYear();
+  const nums=(state.contracts||[]).map(c=>Number(String(c.number||'').match(/(\d+)$/)?.[1]||0));
+  return `CTR-${year}-${String(Math.max(0,...nums)+1).padStart(3,'0')}`;
+}
+function contractClientOptions(){
+  return state.clients.slice().sort((a,b)=>String(a.name||'').localeCompare(String(b.name||''),'es',{sensitivity:'base'}))
+    .map(c=>({value:c.id,label:c.name||'Cliente'}));
+}
+function contractDraftFromForm(){
+  const c=clientBy($('ctClient')?.value||'');
+  return {
+    clientId:c.id||'',clientName:c.name||'',clientPhone:c.phone||'',clientEmail:c.email||'',
+    number:$('ctNumber')?.value||contractNumber(),
+    date:$('ctDate')?.value||today(),
+    place:$('ctPlace')?.value||'Puerto Rico',
+    address:$('ctAddress')?.value||c.address||'',
+    service:$('ctService')?.value||'',
+    startDate:$('ctStart')?.value||'',
+    endDate:$('ctEnd')?.value||'',
+    frequency:$('ctFrequency')?.value||'',
+    amount:$('ctAmount')?.value||'',
+    paymentTerms:$('ctPaymentTerms')?.value||'',
+    conditions:$('ctConditions')?.value||'',
+    termination:$('ctTermination')?.value||''
+  };
+}
+function buildContractText(d){
+  const p=profile(), provider=p.businessName||'EL PROVEEDOR';
+  return `CONTRATO DE PRESTACIÓN DE SERVICIOS
+
+CONTRATO NÚM.: ${d.number||'________________'}
+
+En ${d.place||'________________'}, Puerto Rico, a ${d.date||'________________'}, comparecen ${provider}, en adelante “EL PROVEEDOR”, y ${d.clientName||'EL CLIENTE'}, en adelante “EL CLIENTE”.
+
+PRIMERO — OBJETO Y ALCANCE
+EL PROVEEDOR prestará los siguientes servicios:
+${d.service||'________________________________________________________________'}
+
+SEGUNDO — LUGAR DEL SERVICIO
+Los servicios se realizarán en:
+${d.address||'________________________________________________________________'}
+
+TERCERO — VIGENCIA Y PROGRAMACIÓN
+Fecha de inicio: ${d.startDate||'________________'}.
+Fecha de terminación, si aplica: ${d.endDate||'________________'}.
+Frecuencia / programación: ${d.frequency||'Según coordinación entre las partes.'}
+
+CUARTO — HONORARIOS Y FORMA DE PAGO
+Tarifa o monto acordado: ${d.amount||'Según cotización o acuerdo vigente.'}
+Condiciones de pago: ${d.paymentTerms||'Pago según lo acordado entre las partes.'}
+
+QUINTO — CONDICIONES DEL SERVICIO
+${d.conditions||'EL CLIENTE facilitará acceso razonable al lugar de trabajo y EL PROVEEDOR realizará los servicios conforme al alcance acordado y a condiciones seguras de trabajo.'}
+
+SEXTO — CANCELACIÓN O TERMINACIÓN
+${d.termination||'Cualquiera de las partes podrá solicitar la terminación del acuerdo sujeto a los compromisos, servicios y balances pendientes existentes a la fecha de terminación.'}
+
+SÉPTIMO — ACEPTACIÓN
+Las partes declaran que han leído, entendido y aceptado las condiciones de este contrato.
+
+________________________________
+EL PROVEEDOR
+${provider}
+
+________________________________
+EL CLIENTE
+${d.clientName||'________________'}
+
+Fecha: __________________________`;
+}
+function renderContractForm(){
+  const f=$('contractForm'); if(!f)return;
+  const selected=state.editingContractId ? (state.contracts.find(c=>c.id===state.editingContractId)||{}) : {};
+  f.innerHTML=
+    select('Cliente','ctClient',contractClientOptions(),selected.clientId||'')+
+    input('Contrato #','ctNumber','text',selected.number||contractNumber())+
+    input('Fecha','ctDate','date',selected.date||today())+
+    input('Lugar','ctPlace','text',selected.place||'Puerto Rico')+
+    input('Dirección / lugar del servicio','ctAddress','text',selected.address||'','wide')+
+    input('Servicio o alcance','ctService','text',selected.service||'','wide')+
+    input('Fecha inicio','ctStart','date',selected.startDate||'')+
+    input('Fecha terminación (si aplica)','ctEnd','date',selected.endDate||'')+
+    input('Frecuencia / duración','ctFrequency','text',selected.frequency||'')+
+    input('Tarifa / monto','ctAmount','text',selected.amount||'')+
+    input('Condiciones de pago','ctPaymentTerms','text',selected.paymentTerms||'','wide')+
+    `<div class="wide"><label>Condiciones del servicio</label><textarea id="ctConditions" rows="4">${esc(selected.conditions||'')}</textarea></div>`+
+    `<div class="wide"><label>Cancelación / terminación</label><textarea id="ctTermination" rows="3">${esc(selected.termination||'')}</textarea></div>`+
+    `<div class="wide"><label>Texto del contrato</label><textarea id="ctBody" rows="20">${esc(selected.body||'')}</textarea><small class="muted">Puedes editar el texto antes de guardarlo.</small></div>`+
+    `<div class="wide form-actions"><button id="generateContractText" type="button">Generar texto</button><button class="primary" type="submit">${state.editingContractId?'Actualizar contrato':'Guardar contrato'}</button>${state.editingContractId?'<button id="cancelContractEdit" type="button" class="ghost">Cancelar edición</button>':''}</div>`;
+  const clientSel=$('ctClient');
+  if(clientSel)clientSel.onchange=()=>{const c=clientBy(clientSel.value);if(c.id&&!$('ctAddress').value)$('ctAddress').value=[c.address,c.city].filter(Boolean).join(', ');};
+  if($('generateContractText'))$('generateContractText').onclick=()=>{$('ctBody').value=buildContractText(contractDraftFromForm());};
+  if($('cancelContractEdit'))$('cancelContractEdit').onclick=()=>{state.editingContractId=null;renderContractForm();bindContractForm();};
+}
+function contractPrintHtml(c){
+  const p=profile();
+  return `<div class="doc-page"><div class="doc-head">${p.logoPdf?`<img src="${esc(p.logoPdf)}">`:''}<div><h2>CONTRATO DE PRESTACIÓN DE SERVICIOS</h2><p>${esc(p.businessName||'')}</p></div></div><div class="doc-body" style="white-space:pre-wrap;line-height:1.6">${esc(c.body||buildContractText(c))}</div><div class="doc-foot">Contrato ${esc(c.number||'')} · ${esc(c.date||'')}</div></div>`;
+}
+function printServiceContract(id){
+  const c=state.contracts.find(x=>x.id===id);if(!c)return;
+  const html=contractPrintHtml(c),w=open('','_blank');if(!w)return alert('Permite ventanas emergentes para imprimir.');
+  w.document.write(`<html><head><title>${esc(c.number||'Contrato')}</title><link rel="stylesheet" href="styles.css"><style>@page{size:letter;margin:.55in}body{background:white;margin:0}.doc-page{box-shadow:none!important;border:0!important;margin:0!important;max-width:none!important}</style></head><body>${html}</body></html>`);
+  w.document.close();setTimeout(()=>{w.focus();w.print();},600);
+}
+function renderContractsTable(){
+  const box=$('contractsTable');if(!box)return;
+  const rows=[...(state.contracts||[])].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  if($('contractsCount'))$('contractsCount').textContent=`${rows.length} contrato${rows.length===1?'':'s'}`;
+  box.innerHTML=table(['Fecha','Contrato','Cliente','Servicio','Vigencia','Acción'],rows.map(c=>`<tr><td>${esc(c.date||'')}</td><td><b>${esc(c.number||'')}</b></td><td><b>${esc(c.clientName||'')}</b><br><span class="muted">${esc(c.address||'')}</span></td><td>${esc(c.service||'')}</td><td>${esc(c.startDate||'')}${c.endDate?' → '+esc(c.endDate):''}<br><span class="muted">${esc(c.frequency||'')}</span></td><td><div class="actions"><button type="button" data-contract-print="${c.id}">Imprimir / PDF</button><button type="button" data-contract-edit="${c.id}">Editar</button><button type="button" class="danger" data-contract-delete="${c.id}">Borrar</button></div></td></tr>`));
+  box.querySelectorAll('[data-contract-print]').forEach(b=>b.onclick=()=>printServiceContract(b.dataset.contractPrint));
+  box.querySelectorAll('[data-contract-edit]').forEach(b=>b.onclick=()=>{state.editingContractId=b.dataset.contractEdit;renderContractForm();bindContractForm();window.scrollTo({top:0,behavior:'smooth'});});
+  box.querySelectorAll('[data-contract-delete]').forEach(b=>b.onclick=async()=>{if(confirm('¿Borrar este contrato?'))await deleteDoc(docPath('contracts',b.dataset.contractDelete));});
+}
+function bindContractForm(){
+  const f=$('contractForm');if(!f||f.dataset.bound==='1')return;f.dataset.bound='1';
+  f.onsubmit=async e=>{
+    e.preventDefault();
+    const d=contractDraftFromForm();if(!d.clientId)return alert('Selecciona un cliente.');
+    const payload={...d,body:$('ctBody')?.value?.trim()||buildContractText(d),updatedAt:serverTimestamp()};
+    if(state.editingContractId){await updateDoc(docPath('contracts',state.editingContractId),payload);state.editingContractId=null;}
+    else await add('contracts',{...payload,createdAt:serverTimestamp()});
+    renderContractForm();bindContractForm();
+  };
+}
+const __v90Forms=forms;
+forms=function(){__v90Forms();renderContractForm();};
+const __v90Tables=tables;
+tables=function(){__v90Tables();renderContractsTable();};
+
+function render(){setVisuals();nav();forms();bindContractForm();bindServiceItems();bindQuoteItems();bindServiceProductivity();if(isTransport()){['sOrigin','sDestination','sRouteMiles','sRouteRate','sRouteBase'].forEach(id=>$(id)&&($(id).oninput=updateTransportTotal));updateTransportTotal();}kpis();renderHomePolish();tables();bindDirectoryControls();plans();renderWelcomeCenter();enforceModuleView();$('pageTitle').textContent=T(TITLES[state.activeView]||state.activeView);$('pageSubtitle').textContent=state.activeView==='dashboard'?T('Resumen operativo, financiero y alertas'):' ';applyLanguage();}
 async function add(c,data){if(!canCreate(c)){alert(`Límite alcanzado en plan ${plan().name}. Mejora tu plan.`);show('plans');return null;}return await addDoc(colPath(c),{...data,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});}
 
 function showClientSummary(id){
