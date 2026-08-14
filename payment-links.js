@@ -1,11 +1,5 @@
 import './service-extras.js';
 
-// Contratos se carga después de que Nexus termine de inicializar Firebase.
-// Esto evita que contracts.js cree la app Firebase antes que app.js.
-window.addEventListener('load',()=>{
-  import('./contracts.js').catch(err=>console.error('No se pudo cargar Contratos de servicios:',err));
-},{once:true});
-
 // Enlaces privados del dueño del SaaS. No se editan desde el panel del cliente.
 // Reemplaza estos URLs por Stripe Payment Links / Checkout, ATH Business link, PayPal o página de pago propia.
 window.NEXUS_OWNER_EMAIL = "nexustoolspr@gmail.com";
