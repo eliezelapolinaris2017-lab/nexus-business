@@ -1,5 +1,4 @@
 import './service-extras.js';
-import './contracts.js';
 
 // Enlaces privados del dueño del SaaS. No se editan desde el panel del cliente.
 // Reemplaza estos URLs por Stripe Payment Links / Checkout, ATH Business link, PayPal o página de pago propia.
