@@ -1462,13 +1462,27 @@ function renderContractForm(){
 }
 function contractPrintHtml(c){
   const p=profile();
-  return `<div class="doc-page"><div class="doc-head">${p.logoPdf?`<img src="${esc(p.logoPdf)}">`:''}<div><h2>CONTRATO DE PRESTACIÓN DE SERVICIOS</h2><p>${esc(p.businessName||'')}</p></div></div><div class="doc-body" style="white-space:pre-wrap;line-height:1.6">${esc(c.body||buildContractText(c))}</div><div class="doc-foot">Contrato ${esc(c.number||'')} · ${esc(c.date||'')}</div></div>`;
+  return `<div class="doc-page contract-doc"><div class="contract-doc-head">${p.logoPdf?`<img class="contract-doc-logo" src="${esc(p.logoPdf)}" alt="Logo">`:''}<div class="contract-doc-heading"><h2>CONTRATO DE PRESTACIÓN DE SERVICIOS</h2><p>${esc(p.businessName||'')}</p><small>${esc(c.number||'')} · ${esc(c.date||'')}</small></div></div><div class="doc-body contract-doc-body">${esc(c.body||buildContractText(c))}</div><div class="doc-foot contract-doc-foot">Contrato ${esc(c.number||'')} · ${esc(c.date||'')}</div></div>`;
 }
 function printServiceContract(id){
   const c=state.contracts.find(x=>x.id===id);if(!c)return;
   const html=contractPrintHtml(c),w=open('','_blank');if(!w)return alert('Permite ventanas emergentes para imprimir.');
-  w.document.write(`<html><head><title>${esc(c.number||'Contrato')}</title><link rel="stylesheet" href="styles.css"><style>@page{size:letter;margin:.55in}body{background:white;margin:0}.doc-page{box-shadow:none!important;border:0!important;margin:0!important;max-width:none!important}</style></head><body>${html}</body></html>`);
-  w.document.close();setTimeout(()=>{w.focus();w.print();},600);
+  w.document.write(`<html><head><meta charset="utf-8"><title>${esc(c.number||'Contrato')}</title><style>
+    @page{size:letter;margin:.48in}
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif}
+    .contract-doc{width:100%;min-height:0;margin:0;padding:0;border:0;box-shadow:none;display:block}
+    .contract-doc-head{display:flex;align-items:center;justify-content:center;gap:.22in;border-bottom:1px solid #9ca3af;padding:0 0 .13in;margin:0 0 .16in}
+    .contract-doc-logo{display:block;width:auto!important;height:auto!important;max-width:1.05in!important;max-height:.72in!important;object-fit:contain!important;flex:0 0 auto}
+    .contract-doc-heading{text-align:left}
+    .contract-doc-heading h2{font-size:13pt;line-height:1.15;letter-spacing:.04em;margin:0 0 3px;font-weight:700}
+    .contract-doc-heading p{font-size:9.5pt;margin:0 0 2px}
+    .contract-doc-heading small{font-size:8pt;color:#666}
+    .contract-doc-body{white-space:pre-wrap;font-size:9.5pt;line-height:1.32;padding:0;margin:0}
+    .contract-doc-foot{margin-top:.12in;padding-top:.07in;border-top:1px solid #ddd;text-align:center;color:#777;font-size:7.5pt}
+    @media print{.contract-doc-logo{max-width:1.05in!important;max-height:.72in!important}.contract-doc-head{break-inside:avoid}.contract-doc-body{orphans:3;widows:3}}
+  </style></head><body>${html}</body></html>`);
+  w.document.close();setTimeout(()=>{w.focus();w.print();},450);
 }
 function renderContractsTable(){
   const box=$('contractsTable');if(!box)return;
