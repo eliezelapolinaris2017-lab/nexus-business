@@ -2,7 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta id="desktopViewport" name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Nexus Desktop" />
+  <meta name="theme-color" content="#0f172a" />
+  <link rel="manifest" href="manifest-desktop.webmanifest?v=93" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/nexus-desktop-180.png?v=93" />
+  <script>
+    (()=>{
+      const desktop=new URLSearchParams(location.search).get('desktop')==='1';
+      if(!desktop)return;
+      document.documentElement.classList.add('nexus-desktop-pwa');
+      document.getElementById('desktopViewport')?.setAttribute('content','width=1200,initial-scale=0.78,minimum-scale=0.5,maximum-scale=2,user-scalable=yes');
+    })();
+  </script>
   <title>Nexus Business PR SaaS</title>
   <link id="faviconLink" rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f172a'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-size='30' fill='white' font-family='Arial'%3EN%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css?v=85" />
@@ -193,6 +207,6 @@
   </div>
 
   <script type="module" src="payment-links.js?v=51"></script>
-  <script type="module" src="app.js?v=87"></script>
+  <script type="module" src="app.js?v=94"></script>
 </body>
 </html>
