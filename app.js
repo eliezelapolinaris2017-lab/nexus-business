@@ -1484,10 +1484,22 @@ function bindContractForm(){
   f.onsubmit=async e=>{
     e.preventDefault();
     const d=contractDraftFromForm();if(!d.clientId)return alert('Selecciona un cliente.');
-    const payload={...d,body:$('ctBody')?.value?.trim()||buildContractText(d),updatedAt:serverTimestamp()};
-    if(state.editingContractId){await updateDoc(docPath('contracts',state.editingContractId),payload);state.editingContractId=null;}
-    else await add('contracts',{...payload,createdAt:serverTimestamp()});
-    renderContractForm();bindContractForm();
+    const submit=f.querySelector('button[type=\"submit\"]');
+    const oldText=submit?.textContent||'Guardar contrato';
+    if(submit){submit.disabled=true;submit.textContent='Guardando…';}
+    try{
+      const payload={...d,body:$('ctBody')?.value?.trim()||buildContractText(d),updatedAt:serverTimestamp()};
+      if(state.editingContractId){await updateDoc(docPath('contracts',state.editingContractId),payload);state.editingContractId=null;}
+      else {
+        const ref=await add('contracts',{...payload,createdAt:serverTimestamp()});
+        if(!ref)return;
+      }
+      alert('Contrato guardado correctamente.');
+      renderContractForm();bindContractForm();
+    }catch(err){
+      console.error('Error guardando contrato:',err);
+      alert('No se pudo guardar el contrato. '+(err?.code==='permission-denied'?'Firestore no tiene autorizada la colección contracts. Actualiza las reglas de Firebase incluidas en esta versión.':(err?.message||err)));
+    }finally{if(submit){submit.disabled=false;submit.textContent=oldText;}}
   };
 }
 const __v90Forms=forms;
