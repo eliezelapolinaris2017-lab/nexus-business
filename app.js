@@ -2793,8 +2793,10 @@ function portalBaseUrl(){
   return url.toString();
 }
 function newPortalToken(){
-  const bytes=new Uint8Array(24); crypto.getRandomValues(bytes);
-  return Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+  const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes=new Uint8Array(12); crypto.getRandomValues(bytes);
+  const raw=Array.from(bytes,b=>alphabet[b%alphabet.length]).join('');
+  return raw.match(/.{1,4}/g).join('-');
 }
 function portalInvoiceData(inv){
   const items=(inv.items||[]).map(i=>({description:i.description||i.desc||'',qty:Number(i.qty||1),price:Number(i.price||0)}));
@@ -2839,8 +2841,8 @@ async function syncClientPortal(clientId,{openAfter=true,copyLink=true,notify=tr
   const copied=copyLink?await copyPortalLink(link):false;
   if(openAfter) window.open(link,'_blank','noopener');
   if(notify&&copyLink){
-    if(copied) alert('Portal actualizado. El enlace privado fue copiado.');
-    else window.prompt('Portal actualizado. Safari no permitió copiar automáticamente. Copia este enlace:',link);
+    if(copied) alert('Portal actualizado.\n\nCódigo privado: '+token+'\n\nEl enlace privado también fue copiado.');
+    else window.prompt('Portal actualizado. Código privado: '+token+'\n\nSafari no permitió copiar automáticamente. Copia este enlace:',link);
   }
   return link;
 }
