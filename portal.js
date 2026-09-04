@@ -94,3 +94,35 @@ $('accessForm').onsubmit=e=>{e.preventDefault();const token=$('accessCode').valu
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{active=b.dataset.tab;renderTab()});
 $('exitBtn').onclick=()=>{localStorage.removeItem('nexusPortalAccess');location.href='./'};
 const params=new URLSearchParams(location.search);const initial=params.get('access')||localStorage.getItem('nexusPortalAccess')||'';if(initial){$('accessCode').value=initial;openPortal(initial)}
+
+
+// PWA Portal del Cliente
+let deferredInstallPrompt=null;
+const installBtn=$('installAppBtn');
+function isStandalone(){return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone===true;}
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault(); deferredInstallPrompt=e;
+  if(installBtn&&!isStandalone()) installBtn.classList.remove('hidden');
+});
+window.addEventListener('appinstalled',()=>{
+  deferredInstallPrompt=null;
+  if(installBtn) installBtn.classList.add('hidden');
+});
+if(installBtn){
+  if(isStandalone()) installBtn.classList.add('hidden');
+  installBtn.onclick=async()=>{
+    if(deferredInstallPrompt){
+      deferredInstallPrompt.prompt();
+      try{await deferredInstallPrompt.userChoice;}catch(_){}
+      deferredInstallPrompt=null; installBtn.classList.add('hidden');
+      return;
+    }
+    const isiOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+    alert(isiOS
+      ? 'En iPhone/iPad: toca Compartir y luego “Añadir a pantalla de inicio”.'
+      : 'Usa el menú del navegador y selecciona “Instalar app” o “Añadir a pantalla de inicio”.');
+  };
+}
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js',{scope:'./'}).catch(e=>console.warn('PWA portal:',e)));
+}
